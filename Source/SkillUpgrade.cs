@@ -1,233 +1,234 @@
 using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Xml;
 using EntityStates;
-using R2API.Utils;
 using RoR2;
 using RoR2.Projectile;
 using RoR2.Skills;
 using SkillsPlusPlus.Modifiers;
 using UnityEngine;
-using UnityEngine.Networking;
 
-namespace SkillsPlusPlus {
-
+namespace SkillsPlusPlus
+{
+    /// <summary>
+    /// One per skill slot on every survivor body. Reads its level from the owner's <see cref="SkillPointsController"/>
+    /// (which the host keeps in sync) and drives the matching <see cref="BaseSkillModifier"/>.
+    ///
+    /// Modifiers that change shared/static values (<see cref="BaseSkillModifier.OnSkillLeveledUp"/>) only run on the
+    /// machine that controls this body, and they are re-applied right before each skill state starts. That way the host
+    /// never overwrites its own values with a client's levels, and two players on one machine don't clobber each other.
+    /// </summary>
     [RequireComponent(typeof(CharacterBody))]
-    public class SkillUpgrade : NetworkBehaviour {
-
-        [SyncVar(hook = "OnSkillLevelChanged")]
+    public class SkillUpgrade : MonoBehaviour
+    {
+        /// <summary>Current level of the skill in this slot. Kept as a field for API compatibility.</summary>
         public int skillLevel;
 
         public SkillPointsController skillPointsController { get; private set; }
         public GenericSkill targetGenericSkill;
-
         public string targetBaseSkillName;
 
-        CharacterBody characterBody;
+        private CharacterBody characterBody;
 
-        private bool isSurvivorEnabled {
-            get { return skillPointsController?.isSurvivorEnabled == true; }
+        private bool isSurvivorEnabled => skillPointsController && skillPointsController.isSurvivorEnabled;
+
+        private void Awake()
+        {
+            characterBody = GetComponent<CharacterBody>();
+            targetBaseSkillName = SkillName(targetGenericSkill ? targetGenericSkill.skillDef : null);
         }
 
-        void Awake() {
-            this.characterBody = this.GetComponent<CharacterBody>();
-            this.targetBaseSkillName = ((ScriptableObject)targetGenericSkill.skillDef)?.name;
-            Logger.Debug("Awake() targetBaseSkillName: {0}", targetBaseSkillName);
-        }
-
-        void OnEnable() {
-            Logger.Debug("OnEnable() targetBaseSkillName: {0}", targetBaseSkillName);
-            this.targetGenericSkill.onSkillChanged += this.OnSkillChanged;
-            On.EntityStates.BaseState.OnEnter += this.OnBaseStateEnter;
-            On.EntityStates.EntityState.OnExit += this.OnBaseStateExit;
-
+        private void OnEnable()
+        {
+            if (targetGenericSkill) targetGenericSkill.onSkillChanged += OnSkillChanged;
             RefreshUpgrades();
         }
 
-        void OnDisable() {
-            Logger.Debug("OnDisable() targetBaseSkillName: {0}", targetBaseSkillName);
-            On.EntityStates.BaseState.OnEnter -= this.OnBaseStateEnter;
-            On.EntityStates.EntityState.OnExit -= this.OnBaseStateExit;
-            if (targetGenericSkill) {
-                targetGenericSkill.onSkillChanged -= this.OnSkillChanged;
-            }
-
-            if (this.skillPointsController) {
-                this.skillPointsController.PersistUpgrade(skillLevel, this.targetBaseSkillName);
-            }
+        private void OnDisable()
+        {
+            if (targetGenericSkill) targetGenericSkill.onSkillChanged -= OnSkillChanged;
         }
 
-        #region Getters and setters
-
-        public void SetSkillPointsController(SkillPointsController skillPointsController) {
-            if (this.skillPointsController) {
-                Logger.Warn("Setting the skill points controller a second time is irregular behaviour. It should be added just once when the character body enables");
-            }
-            this.skillPointsController = skillPointsController;
+        public void SetSkillPointsController(SkillPointsController controller)
+        {
+            skillPointsController = controller;
             RefreshUpgrades();
         }
 
-        #endregion
-
-        #region Events
-
-        void OnSkillChanged(GenericSkill genericSkill) {
-
-            this.targetBaseSkillName = ((ScriptableObject)genericSkill.skillDef)?.name;
-            Logger.Debug("OnSkillChanged({0})", targetBaseSkillName);
+        private void OnSkillChanged(GenericSkill genericSkill)
+        {
+            targetBaseSkillName = SkillName(genericSkill ? genericSkill.skillDef : null);
             RefreshUpgrades();
         }
 
-        [Client]
-        void OnSkillLevelChanged(int newSkillLevel) {
-            Logger.Debug("OnSkillLevelChanged({0})", newSkillLevel);
-            this.skillLevel = newSkillLevel;
-            RefreshUpgrades();
-        }
-
-        #endregion
-
-        void RefreshUpgrades() {
-            if (!isSurvivorEnabled) {
-                Logger.Debug("Couldn't refresh upgrades because the survivor is disabled. targetBaseSkillName: {0}", targetBaseSkillName);
-                return;
-            };
-            var activeSkillDef = GetActiveSkillDef(targetGenericSkill);
-            if (activeSkillDef == null) {
-                Logger.Debug("Couldn't refresh upgrades because there is no active skill. targetBaseSkillName: {0}", targetBaseSkillName);
-                return;
-            }
-            Logger.Debug("RefreshUpgrades() activeSkillDef: {0}", ((ScriptableObject)activeSkillDef)?.name);
-            var modifier = SkillModifierManager.GetSkillModifier(activeSkillDef);
-            if (modifier != null) {
-                // TODO: rename OnSkillLeveledUp to OnSkillChanged
-                modifier.characterBody = this.characterBody;
-                modifier.OnSkillLeveledUp(this.skillLevel, this.characterBody, activeSkillDef);
-                if (targetGenericSkill) {
-                    targetGenericSkill.RecalculateValues();
-                }
-            }
-        }
-
-        public void OnBuySkill() {
-            CmdOnBuySkill(this.targetBaseSkillName);
-        }
-
-        [Command]
-        [Server]
-        private void CmdOnBuySkill(string targetSkillName) {
+        /// <summary>Re-reads the level from the controller and re-applies the modifier on the owning machine.</summary>
+        public void RefreshUpgrades()
+        {
+            skillLevel = skillPointsController ? skillPointsController.GetLevel(targetBaseSkillName) : 0;
             if (!isSurvivorEnabled) return;
-            var allSkillUpgrades = this.GetComponents<SkillUpgrade>();
-            foreach (var skillUpgrade in allSkillUpgrades) {
-                if (skillUpgrade.targetBaseSkillName == targetSkillName) {
-                    if (skillPointsController && skillUpgrade.CanUpgradeSkill()) {
-                        skillPointsController.DeductSkillPoints(1);
-                        skillUpgrade.skillLevel += 1;
-                        Logger.Debug("CmdOnBuySkill({0}): skillLevel: {1}", skillUpgrade.targetBaseSkillName, skillUpgrade.skillLevel);
-                        skillUpgrade.RefreshUpgrades();
-                    }
-                }
+            ApplyLevelLocally();
+        }
+
+        private void ApplyLevelLocally()
+        {
+            if (!characterBody || !characterBody.hasEffectiveAuthority) return;
+            SkillDef activeSkillDef = GetActiveSkillDef(targetGenericSkill);
+            if (activeSkillDef == null) return;
+            var modifier = SkillModifierManager.GetSkillModifier(activeSkillDef);
+            if (modifier == null) return;
+            modifier.characterBody = characterBody;
+            modifier.registeredSkill = this;
+            modifier.OnSkillLeveledUp(skillLevel, characterBody, activeSkillDef);
+            if (targetGenericSkill) targetGenericSkill.RecalculateValues();
+        }
+
+        public void OnBuySkill()
+        {
+            if (skillPointsController && CanUpgradeSkill())
+            {
+                skillPointsController.RequestBuy(targetBaseSkillName);
             }
         }
 
-        public bool CanUpgradeSkill() {
-            if (!isSurvivorEnabled) return false;
-            if (targetGenericSkill == null) return false;
-            if (skillPointsController && !skillPointsController.hasUnspentPoints) return false;
-            return SkillModifierManager.HasSkillModifier(this.targetBaseSkillName);
+        public bool CanUpgradeSkill()
+        {
+            if (!isSurvivorEnabled || targetGenericSkill == null) return false;
+            if (!skillPointsController.hasUnspentPoints) return false;
+            return SkillModifierManager.HasSkillModifier(targetBaseSkillName);
         }
 
-        static List<EntityState> pastStates = new List<EntityState>();
-
-        private CharacterBody FindOwningCharacterBody(EntityState state) {
-            if (state == null) {
-                Logger.Debug("State was null, returning.");
-                return null;
+        /// <summary>Level of the given skill (by SkillDef name) on this body, or 0.</summary>
+        public static int GetLevel(CharacterBody body, params string[] skillNames)
+        {
+            var controller = SkillPointsController.FromBody(body);
+            if (!controller) return 0;
+            int level = 0;
+            foreach (string name in skillNames)
+            {
+                level = Math.Max(level, controller.GetLevel(name));
             }
+            return level;
+        }
 
-            bool bLogging = !pastStates.Contains(state);
-            if (bLogging) pastStates.Add(state);
+        internal static string SkillName(SkillDef skillDef) => skillDef ? ((ScriptableObject)skillDef).name : null;
 
-            if (state.outer) {
-                if (state.outer.TryGetComponent(out CharacterBody characterBody)) {
-                    if (characterBody.master && characterBody.master.gameObject.TryGetComponent(out MinionOwnership minion) && minion.ownerMaster) {
-                        // GetBody() isn't guaranteed to not return a null reference
-                        var masterBody = minion.ownerMaster.GetBody();
-                        if (bLogging) Logger.Debug(state.GetType().Name + ": Found MinionOwner in CharacterBody, returning " + (masterBody?.GetDisplayName() ?? "[INVALID/REMOVED]"));
-                        return minion.ownerMaster.GetBody();
-                    }
+        private static SkillDef GetActiveSkillDef(GenericSkill genericSkill)
+        {
+            if (genericSkill == null) return null;
+            return genericSkill.skillDef ? genericSkill.skillDef : genericSkill.baseSkill;
+        }
 
-                    if (bLogging) Logger.Debug(state.GetType().Name + ": Found CharacterBody, returning " + characterBody.GetDisplayName());
-                    RefreshUpgrades(); // kinda a hacky way to do it ? idk it works and 4 am <3 
-                    return characterBody;
-                } else if (state.outer.TryGetComponent(out ProjectileController projectileController) && projectileController.owner) {
-                    if (bLogging) Logger.Debug(state.GetType().Name + ": Found ProjectileController, returning " + projectileController.owner.GetComponent<CharacterBody>().GetDisplayName());
-                    return projectileController.owner.GetComponent<CharacterBody>();
-                } else if (state.outer.TryGetComponent(out MinionOwnership minionOwnership) && minionOwnership.ownerMaster) {
-                    var masterBody = minionOwnership.ownerMaster.GetBody();
-                    if (bLogging) Logger.Debug(state.GetType().Name + ": Found MinionOwnership, returning " + (masterBody?.GetDisplayName() ?? "[INVALID/REMOVED]"));
-                    return minionOwnership.ownerMaster.GetBody();
-                } else if (state.outer.TryGetComponent(out GenericOwnership genericOwnership) && genericOwnership.ownerObject) {
-                    if (bLogging) Logger.Debug(state.GetType().Name + ": Found GenericOwnership, returning " + genericOwnership.ownerObject.GetComponent<CharacterBody>().GetDisplayName());
-                    return genericOwnership.ownerObject.GetComponent<CharacterBody>();
-                } else if (state.outer.TryGetComponent(out Deployable deployable) && deployable.ownerMaster) {
-                    var masterBody = deployable.ownerMaster.GetBody(); // This isn't a gup, but knowing GetBody() can return null we should be checking it anyway
-                    if (bLogging) Logger.Debug(state.GetType().Name + ": Found Deployable, returning " + (masterBody?.GetDisplayName() ?? "[INVALID/REMOVED]"));
-                    return deployable.ownerMaster.GetBody();
+        #region Entity state hooks (installed once, globally)
+
+        internal static void InstallHooks()
+        {
+            On.EntityStates.BaseState.OnEnter += OnBaseStateEnter;
+            On.EntityStates.EntityState.OnExit += OnBaseStateExit;
+        }
+
+        /// <summary>Finds the upgrade on the owning survivor whose active skill this state belongs to.</summary>
+        private static SkillUpgrade FindUpgradeForState(EntityState state, BaseSkillModifier modifier)
+        {
+            CharacterBody owner = FindOwningCharacterBody(state);
+            if (!owner) return null;
+            foreach (var upgrade in owner.GetComponents<SkillUpgrade>())
+            {
+                if (!upgrade.isSurvivorEnabled) continue;
+                string name = SkillName(GetActiveSkillDef(upgrade.targetGenericSkill));
+                if (name != null && modifier.skillNames.Contains(name, StringComparer.OrdinalIgnoreCase))
+                {
+                    return upgrade;
                 }
             }
             return null;
         }
 
-        private static SkillDef GetActiveSkillDef(GenericSkill genericSkill) {
-            if (genericSkill == null) {
-                return null;
-            }
-
-            if (genericSkill.skillDef != null) {
-                return genericSkill.skillDef;
-            }
-
-            return genericSkill.baseSkill;
-        }
-
-        private void OnBaseStateEnter(On.EntityStates.BaseState.orig_OnEnter orig, BaseState self) {
-            if (self == null) // we can probably ujsthand this to the main func then <3 ,.
+        private static void OnBaseStateEnter(On.EntityStates.BaseState.orig_OnEnter orig, BaseState self)
+        {
+            if (self != null)
             {
-                orig(self);
-                return;
-            }
-            if (isSurvivorEnabled && FindOwningCharacterBody(self)?.gameObject == this.gameObject && self is BaseState baseState) {
-                var skillModifier = SkillModifierManager.GetSkillModifiersForEntityStateType(baseState.GetType());
-                var activeSkillDef = GetActiveSkillDef(this.targetGenericSkill);
-                if (skillModifier != null && activeSkillDef != null && skillModifier.skillNames.Contains(((ScriptableObject)activeSkillDef)?.name)) {
-                    skillModifier.OnSkillEnter(skillState: baseState, this.skillLevel);
-                    Logger.Debug("skill level = " + skillLevel);
-                    orig(self);
-                    return;
-                }
-            }
-            orig(self);
-
-        }
-
-        private void OnBaseStateExit(On.EntityStates.EntityState.orig_OnExit orig, EntityState self) {
-            if (isSurvivorEnabled && self is BaseState baseState && FindOwningCharacterBody(self)?.gameObject == this.gameObject) {
-                var skillModifier = SkillModifierManager.GetSkillModifiersForEntityStateType(baseState.GetType());
-                var activeSkillDef = GetActiveSkillDef(this.targetGenericSkill);
-                if (skillModifier != null && activeSkillDef != null && skillModifier.skillNames.Contains(((ScriptableObject)activeSkillDef)?.name)) {
-                    skillModifier.OnSkillExit(skillState: baseState, this.skillLevel);
-                    orig(self);
-                    return;
+                var modifier = SkillModifierManager.GetSkillModifiersForEntityStateType(self.GetType());
+                if (modifier != null)
+                {
+                    var upgrade = FindUpgradeForState(self, modifier);
+                    if (upgrade)
+                    {
+                        // Make sure shared values reflect THIS player's level before the state reads them.
+                        upgrade.ApplyLevelLocally();
+                        modifier.characterBody = upgrade.characterBody;
+                        modifier.registeredSkill = upgrade;
+                        try
+                        {
+                            modifier.OnSkillEnter(self, upgrade.skillLevel);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error(e);
+                        }
+                    }
                 }
             }
             orig(self);
         }
 
+        private static void OnBaseStateExit(On.EntityStates.EntityState.orig_OnExit orig, EntityState self)
+        {
+            if (self is BaseState baseState)
+            {
+                var modifier = SkillModifierManager.GetSkillModifiersForEntityStateType(baseState.GetType());
+                if (modifier != null)
+                {
+                    var upgrade = FindUpgradeForState(baseState, modifier);
+                    if (upgrade)
+                    {
+                        modifier.characterBody = upgrade.characterBody;
+                        modifier.registeredSkill = upgrade;
+                        try
+                        {
+                            modifier.OnSkillExit(baseState, upgrade.skillLevel);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error(e);
+                        }
+                    }
+                }
+            }
+            orig(self);
+        }
+
+        /// <summary>The survivor that owns a state: the body itself, or the owner of a projectile, minion or deployable.</summary>
+        internal static CharacterBody FindOwningCharacterBody(EntityState state)
+        {
+            if (state == null || !state.outer) return null;
+            var outer = state.outer;
+
+            if (outer.TryGetComponent(out CharacterBody body))
+            {
+                if (body.master && body.master.TryGetComponent(out MinionOwnership minion) && minion.ownerMaster)
+                {
+                    return minion.ownerMaster.GetBody();
+                }
+                return body;
+            }
+            if (outer.TryGetComponent(out ProjectileController projectile) && projectile.owner)
+            {
+                return projectile.owner.GetComponent<CharacterBody>();
+            }
+            if (outer.TryGetComponent(out MinionOwnership minionOwnership) && minionOwnership.ownerMaster)
+            {
+                return minionOwnership.ownerMaster.GetBody();
+            }
+            if (outer.TryGetComponent(out GenericOwnership genericOwnership) && genericOwnership.ownerObject)
+            {
+                return genericOwnership.ownerObject.GetComponent<CharacterBody>();
+            }
+            if (outer.TryGetComponent(out Deployable deployable) && deployable.ownerMaster)
+            {
+                return deployable.ownerMaster.GetBody();
+            }
+            return null;
+        }
+
+        #endregion
     }
 }

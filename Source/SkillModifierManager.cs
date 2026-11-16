@@ -11,7 +11,8 @@ namespace SkillsPlusPlus
     public sealed class SkillModifierManager
     {
 
-        private static readonly Dictionary<string, BaseSkillModifier> skillNameToModifierMap = new Dictionary<string, BaseSkillModifier>();
+        // Case-insensitive: third-party mods are not always consistent (e.g. EggsSkills "EsMicroMissiles" vs "ESMicroMissiles").
+        private static readonly Dictionary<string, BaseSkillModifier> skillNameToModifierMap = new Dictionary<string, BaseSkillModifier>(StringComparer.OrdinalIgnoreCase);
         private static readonly Dictionary<Type, BaseSkillModifier> typeToModifierMap = new Dictionary<Type, BaseSkillModifier>();
 
         /// <summary>

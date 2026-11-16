@@ -21,13 +21,21 @@ namespace SkillsPlusPlus.Modifiers
     internal sealed class EngiSkillModifier
     {
 
-        public static Dictionary<DeployableSlot, int> deployableSlotCountBonus = new Dictionary<DeployableSlot, int>();
+        // Turret skills: one extra turret every two levels. Evaluated on the host from that player's own
+        // synced levels, because the host is the one enforcing deployable limits.
+        private static readonly string[] turretSkills = { "EngiBodyPlaceTurret", "TR12-C Gauss Compact", "EngiBodyPlaceWalkerTurret", "TR58-C Carbonizer Mini" };
 
-        public static int GetDeployableSameSlotBonus(DeployableSlot slot)
+        public static int GetDeployableSameSlotBonus(SkillPointsController controller, DeployableSlot slot)
         {
-            if (deployableSlotCountBonus.TryGetValue(slot, out int bonusCount))
+            if (!controller) return 0;
+            if (slot == DeployableSlot.EngiTurret)
             {
-                return bonusCount;
+                int level = 0;
+                foreach (string skill in turretSkills)
+                {
+                    level = Mathf.Max(level, controller.GetLevel(skill));
+                }
+                return level / 2;
             }
             return 0;
         }
@@ -229,7 +237,6 @@ namespace SkillsPlusPlus.Modifiers
             // an extra turret every two levels
             skillDef.baseMaxStock = (int)AdditiveScaling(2, 0.5f, level);
             FireGauss.damageCoefficient = MultScaling(0.7f, 0.1f, level);
-            EngiSkillModifier.deployableSlotCountBonus[DeployableSlot.EngiTurret] = (int)AdditiveScaling(0, 0.5f, level);
         }
 
     }
@@ -263,7 +270,6 @@ namespace SkillsPlusPlus.Modifiers
         {
             base.OnSkillLeveledUp(level, characterBody, skillDef);
             skillDef.baseMaxStock = (int)AdditiveScaling(2, 0.5f, level);
-            EngiSkillModifier.deployableSlotCountBonus[DeployableSlot.EngiTurret] = (int)AdditiveScaling(0, 0.5f, level);
         }
     }
 }

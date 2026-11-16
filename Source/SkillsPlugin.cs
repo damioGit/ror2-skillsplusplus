@@ -25,6 +25,7 @@ using Rewired.Data.Mapping;
 namespace SkillsPlusPlus
 {
     [BepInDependency(R2API.R2API.PluginGUID)]
+    [BepInDependency(R2API.Networking.NetworkingAPI.PluginGUID)]
     [BepInDependency("com.KingEnderBrine.ExtendedLoadout", BepInDependency.DependencyFlags.SoftDependency)] //Soft-dependency to make Skills++ load after ExtendedLoadout
     [BepInPlugin("com.cwmlolzlz.skills", "Skills", "0.6.4")]
     [BepInDependency("pseudopulse.Rebindables")]
@@ -55,13 +56,14 @@ namespace SkillsPlusPlus
 
             Instance = this;
 
-            //this is required to ensure that you can actually upgrade skills .,.,
+            // Every player master is spawned from this prefab, so this puts a controller on every player.
             GameObject playerMasterPrefab = LegacyResourcesAPI.Load<GameObject>("prefabs/charactermasters/CommandoMaster");
             playerMasterPrefab.EnsureComponent<SkillPointsController>();
-            
-            //ensure hotkeys are properly setup 
-            
-            
+
+            Networking.SkillsNetwork.Register();
+            SkillPointsController.InstallHooks();
+            SkillUpgrade.InstallHooks();
+
             SkillModifierManager.LoadSkillModifiers();
             SkillOptions.SetupGameplayOptions();
 

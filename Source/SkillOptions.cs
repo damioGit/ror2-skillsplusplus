@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using Rebindables;
+using RiskOfOptions;
 using MonoMod.RuntimeDetour;
 using Rewired;
 using Rewired.Data;
@@ -16,6 +17,15 @@ namespace SkillsPlusPlus
     internal class SkillOptions
     {
         public static ModKeybind hotkey { get; set; }
+
+        /// <summary>True while the local player holds the "buy skills" key (keyboard shortcut or rebindable action).</summary>
+        internal static bool IsBuyKeyHeld(CharacterBody body)
+        {
+            if (ConVars.ConVars.buySkillsKeybind.IsPressedInclusive()) return true;
+            InputBankTest inputBank = body ? body.inputBank : null;
+            return inputBank && hotkey != null && inputBank.GetButtonState(hotkey).down;
+        }
+
         internal static void SetupGameplayOptions()
         {
             hotkey = RebindAPI.RegisterModKeybind(new ModKeybind(

@@ -1,151 +1,272 @@
 using System;
 using System.Collections.Generic;
 using EntityStates;
-using Rebindables;
-using Rewired;
-using RiskOfOptions;
+using R2API.Networking;
+using R2API.Networking.Interfaces;
 using RoR2;
 using SkillsPlusPlus.Modifiers;
+using SkillsPlusPlus.Networking;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace SkillsPlusPlus
 {
-
+    /// <summary>
+    /// Lives on every player master and owns that player's skill points and skill levels.
+    ///
+    /// The host is authoritative: it awards points as the team levels up, validates purchases and sends the
+    /// whole state to clients (<see cref="SyncSkillPointsMessage"/>). Clients only display what the host sent
+    /// and ask the host to buy levels (<see cref="BuySkillMessage"/>).
+    ///
+    /// Levels are stored per skill name (the SkillDef asset name), so they survive body changes such as
+    /// respawning, and unspent points are always "earned minus levels of the skills on the current body".
+    /// </summary>
     [RequireComponent(typeof(PlayerCharacterMasterController))]
-    [RequireComponent(typeof(NetworkIdentity))]
-    public sealed class SkillPointsController : NetworkBehaviour
+    public sealed class SkillPointsController : MonoBehaviour
     {
-
-        // private const int SKILL_DISABLED = -1;
-
         private PlayerCharacterMasterController playerCharacterMasterController;
+        private CharacterMaster master;
 
-        private CharacterBody body => playerCharacterMasterController.master?.GetBody();
-        private SkillLocator skillLocator => body?.skillLocator;
+        private readonly Dictionary<string, int> skillLevels = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
-        private TeamIndex PlayerTeamIndex
-        {
-            get
-            {
-                if (playerCharacterMasterController.master.hasBody)
-                {
-                    return playerCharacterMasterController.master.GetBody().teamComponent.teamIndex;
-                }
-                return TeamIndex.None;
-            }
-        }
-
-        [SyncVar]
-        public bool isSurvivorEnabled;
-
-        [SyncVar]
-        private int earnedSkillPoints = 0;
-
-        [SyncVar]
-        private int unspentSkillPoints = 0;
-
-        [SyncVar]
-        private int levelsPerSkillPoint = ConVars.ConVars.levelsPerSkillPoint.value;
-
-        [SyncVar]
-        public bool multScalingLinear = false;
+        public bool isSurvivorEnabled { get; private set; } = true;
+        public int earnedSkillPoints { get; private set; }
+        public int unspentSkillPoints { get; private set; }
+        public int levelsPerSkillPoint { get; private set; } = 5;
+        public bool multScalingLinear { get; private set; }
 
         public bool hasUnspentPoints => unspentSkillPoints > 0;
 
-        private Dictionary<string, int> transferrableSkillUpgrades = new Dictionary<string, int>();
+        internal NetworkInstanceId MasterNetId => master ? master.netId : NetworkInstanceId.Invalid;
+
+        private CharacterBody body => master ? master.GetBody() : null;
+
+        /// <summary>The controller of the player that owns this body, or null for non-players.</summary>
+        public static SkillPointsController FromBody(CharacterBody body)
+        {
+            if (!body || !body.master) return null;
+            return body.master.GetComponent<SkillPointsController>();
+        }
+
+        /// <summary>Current level of a skill (by SkillDef name) for this player.</summary>
+        public int GetLevel(string skillName)
+        {
+            if (string.IsNullOrEmpty(skillName)) return 0;
+            return skillLevels.TryGetValue(skillName, out int level) ? level : 0;
+        }
+
+        internal List<KeyValuePair<string, int>> GetAllLevels() => new List<KeyValuePair<string, int>>(skillLevels);
 
         private void Awake()
         {
+            playerCharacterMasterController = GetComponent<PlayerCharacterMasterController>();
+            master = GetComponent<CharacterMaster>();
+            levelsPerSkillPoint = Math.Max(1, ConVars.ConVars.levelsPerSkillPoint.value);
             multScalingLinear = ConVars.ConVars.multScalingLinear.value;
-            Logger.Debug("levelsPerSkillPoint: {0}", this.levelsPerSkillPoint);
-
-            this.playerCharacterMasterController = this.GetComponent<PlayerCharacterMasterController>();
         }
 
         private void OnEnable()
         {
-            this.playerCharacterMasterController.master.onBodyStart += this.OnBodyStart;
-            On.RoR2.CharacterMaster.GetDeployableSameSlotLimit += this.GetDeployableSameSlotLimit;
-            On.EntityStates.GenericCharacterMain.CanExecuteSkill += this.GenericCharacterMain_CanExecuteSkill;
-            if (NetworkServer.active)
-            {
-                On.RoR2.CharacterBody.RecalculateStats += this.OnRecalculateStats;
-            }
+            if (master) master.onBodyStart += OnBodyStart;
         }
 
         private void OnDisable()
         {
-            this.playerCharacterMasterController.master.onBodyStart -= this.OnBodyStart;
-            On.RoR2.CharacterMaster.GetDeployableSameSlotLimit -= this.GetDeployableSameSlotLimit;
-            On.EntityStates.GenericCharacterMain.CanExecuteSkill -= this.GenericCharacterMain_CanExecuteSkill;
-            On.RoR2.CharacterBody.RecalculateStats -= this.OnRecalculateStats;
+            if (master) master.onBodyStart -= OnBodyStart;
         }
 
-        [Server]
-        internal void PersistUpgrade(int skillLevel, string targetBaseSkillName)
+        private void OnBodyStart(CharacterBody newBody)
         {
-            if (targetBaseSkillName == null)
+            if (NetworkServer.active)
             {
-                return;
+                isSurvivorEnabled = !ConVars.ConVars.disabledSurvivors.value.Contains(newBody.GetDisplayName());
             }
-            transferrableSkillUpgrades[targetBaseSkillName] = skillLevel;
-        }
-
-        private void OnBodyStart(CharacterBody body)
-        {
-            this.isSurvivorEnabled = !ConVars.ConVars.disabledSurvivors.value.Contains(body.GetDisplayName());
-            Logger.Debug("OnBodyStart({0})", body);
-            // attempt to transfer and apply skill levels
-            var skillUpgrades = body.GetComponents<SkillUpgrade>();
-            foreach (var skillUpgrade in skillUpgrades)
+            foreach (var skillUpgrade in newBody.GetComponents<SkillUpgrade>())
             {
                 skillUpgrade.SetSkillPointsController(this);
             }
-            TransferSkillUpgrades(body);
-
-#if DEBUG
-            body.healthComponent.godMode = true;
-#endif
+            if (NetworkServer.active)
+            {
+                ServerRecalculatePoints(forceSync: true);
+            }
         }
 
-        private bool bMorphedToHeretic = false;
+        #region Server
 
-        [Server]
-        private void TransferSkillUpgrades(CharacterBody body)
+        /// <summary>Awards points for the current team level and recomputes unspent points.</summary>
+        internal void ServerRecalculatePoints(bool forceSync = false)
         {
-            unspentSkillPoints = SkillPointsAtLevel((int)body.level);
+            if (!NetworkServer.active || !master) return;
 
-            //If this is the first time we morph into heretic, Heretic skill levels will be reset to allow respec'ing.
-            bool bFirstHereticMorph = body.baseNameToken == "HERETIC_BODY_NAME" && !bMorphedToHeretic;
+            levelsPerSkillPoint = Math.Max(1, ConVars.ConVars.levelsPerSkillPoint.value);
+            multScalingLinear = ConVars.ConVars.multScalingLinear.value;
 
-            var skillUpgrades = body.GetComponents<SkillUpgrade>();
-            foreach (var skillUpgrade in skillUpgrades)
+            int previousEarned = earnedSkillPoints;
+            int previousUnspent = unspentSkillPoints;
+
+            TeamIndex team = master.teamIndex;
+            if (team != TeamIndex.None && TeamManager.instance)
             {
-                if (!isSurvivorEnabled) break;
-                if (skillUpgrade.targetBaseSkillName != null && transferrableSkillUpgrades.ContainsKey(skillUpgrade.targetBaseSkillName))
+                int teamLevel = (int)TeamManager.instance.GetTeamLevel(team);
+                earnedSkillPoints = Math.Max(earnedSkillPoints, SkillPointsAtLevel(teamLevel));
+            }
+            RecomputeUnspent();
+
+            if (forceSync || previousEarned != earnedSkillPoints || previousUnspent != unspentSkillPoints)
+            {
+                ServerSync();
+            }
+        }
+
+        /// <summary>Validates and applies a purchase of one level of <paramref name="skillName"/>.</summary>
+        internal void ServerTryBuy(string skillName)
+        {
+            if (!NetworkServer.active || !isSurvivorEnabled || string.IsNullOrEmpty(skillName)) return;
+            CharacterBody currentBody = body;
+            if (!currentBody) return;
+
+            SkillUpgrade target = null;
+            foreach (var upgrade in currentBody.GetComponents<SkillUpgrade>())
+            {
+                if (string.Equals(upgrade.targetBaseSkillName, skillName, StringComparison.OrdinalIgnoreCase))
                 {
-                    skillUpgrade.skillLevel = (bFirstHereticMorph ? 0 : transferrableSkillUpgrades[skillUpgrade.targetBaseSkillName]);
-                    unspentSkillPoints -= skillUpgrade.skillLevel;
-                    transferrableSkillUpgrades.Remove(skillUpgrade.targetBaseSkillName);
-                    //skillUpgrade.OnBuySkill();
+                    target = upgrade;
+                    break;
                 }
             }
+            if (target == null || !SkillModifierManager.HasSkillModifier(skillName)) return;
 
-            if (bFirstHereticMorph)
+            RecomputeUnspent();
+            if (unspentSkillPoints <= 0) return;
+
+            skillLevels[skillName] = GetLevel(skillName) + 1;
+            Logger.Debug("ServerTryBuy({0}) -> level {1}", skillName, skillLevels[skillName]);
+            RecomputeUnspent();
+            ServerSync();
+            RefreshBodyUpgrades();
+        }
+
+        /// <summary>Debug helper: grants one bonus point.</summary>
+        internal void ServerGiveBonusPoint()
+        {
+            if (!NetworkServer.active) return;
+            earnedSkillPoints++;
+            RecomputeUnspent();
+            ServerSync();
+        }
+
+        private void RecomputeUnspent()
+        {
+            int spent = 0;
+            CharacterBody currentBody = body;
+            if (currentBody)
             {
-                bMorphedToHeretic = true;
+                var counted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var upgrade in currentBody.GetComponents<SkillUpgrade>())
+                {
+                    string name = upgrade.targetBaseSkillName;
+                    if (!string.IsNullOrEmpty(name) && counted.Add(name))
+                    {
+                        spent += GetLevel(name);
+                    }
+                }
+            }
+            unspentSkillPoints = Math.Max(0, earnedSkillPoints - spent);
+        }
+
+        private void ServerSync()
+        {
+            if (!NetworkServer.active || MasterNetId == NetworkInstanceId.Invalid) return;
+            new SyncSkillPointsMessage(this).Send(NetworkDestination.Clients);
+        }
+
+        private int SkillPointsAtLevel(int characterLevel)
+        {
+            if (levelsPerSkillPoint <= 1) return Math.Max(0, characterLevel - 1);
+            return characterLevel / levelsPerSkillPoint;
+        }
+
+        #endregion
+
+        #region Client
+
+        internal void ClientApplySync(bool enabled, int earned, int unspent, int levelsPer, bool linear, List<KeyValuePair<string, int>> levels)
+        {
+            isSurvivorEnabled = enabled;
+            earnedSkillPoints = earned;
+            unspentSkillPoints = unspent;
+            levelsPerSkillPoint = levelsPer;
+            multScalingLinear = linear;
+            skillLevels.Clear();
+            foreach (var pair in levels)
+            {
+                skillLevels[pair.Key] = pair.Value;
+            }
+            RefreshBodyUpgrades();
+        }
+
+        /// <summary>Asks the host to buy one level of a skill. Works for the host itself too.</summary>
+        public void RequestBuy(string skillName)
+        {
+            if (string.IsNullOrEmpty(skillName)) return;
+            if (NetworkServer.active)
+            {
+                ServerTryBuy(skillName);
+            }
+            else if (NetworkClient.active)
+            {
+                new BuySkillMessage(MasterNetId, skillName).Send(NetworkDestination.Server);
             }
         }
 
-        #region Hooks
+        #endregion
 
-        private bool GenericCharacterMain_CanExecuteSkill(On.EntityStates.GenericCharacterMain.orig_CanExecuteSkill orig, GenericCharacterMain self, GenericSkill skillSlot)
+        private void RefreshBodyUpgrades()
         {
-            if (this.isSurvivorEnabled && this.body != null && self.outer.commonComponents.characterBody == this.body)
+            CharacterBody currentBody = body;
+            if (!currentBody) return;
+            foreach (var upgrade in currentBody.GetComponents<SkillUpgrade>())
             {
-                InputBankTest inputPlayer = this.playerCharacterMasterController?.body.inputBank;
-                if (inputPlayer != null && (ConVars.ConVars.buySkillsKeybind.IsPressedInclusive() || inputPlayer.GetButtonState(SkillOptions.hotkey).down) && ConVars.ConVars.disableOnBuy.value && unspentSkillPoints > 0)
+                upgrade.RefreshUpgrades();
+            }
+        }
+
+        #region Global hooks
+
+        internal static void InstallHooks()
+        {
+            On.RoR2.CharacterBody.RecalculateStats += OnRecalculateStats;
+            On.RoR2.CharacterMaster.GetDeployableSameSlotLimit += GetDeployableSameSlotLimit;
+            On.EntityStates.GenericCharacterMain.CanExecuteSkill += CanExecuteSkill;
+        }
+
+        private static void OnRecalculateStats(On.RoR2.CharacterBody.orig_RecalculateStats orig, CharacterBody self)
+        {
+            orig(self);
+            if (NetworkServer.active && self && self.isPlayerControlled)
+            {
+                FromBody(self)?.ServerRecalculatePoints();
+            }
+        }
+
+        private static int GetDeployableSameSlotLimit(On.RoR2.CharacterMaster.orig_GetDeployableSameSlotLimit orig, CharacterMaster self, DeployableSlot slot)
+        {
+            int limit = orig(self, slot);
+            if (self && self.TryGetComponent(out SkillPointsController controller) && controller.isSurvivorEnabled)
+            {
+                limit += EngiSkillModifier.GetDeployableSameSlotBonus(controller, slot);
+            }
+            return limit;
+        }
+
+        /// <summary>Blocks skill use while the "buy skills" key is held, so buying doesn't also fire the skill.</summary>
+        private static bool CanExecuteSkill(On.EntityStates.GenericCharacterMain.orig_CanExecuteSkill orig, GenericCharacterMain self, GenericSkill skillSlot)
+        {
+            CharacterBody selfBody = self.outer ? self.outer.commonComponents.characterBody : null;
+            if (selfBody && selfBody.hasEffectiveAuthority && ConVars.ConVars.disableOnBuy.value)
+            {
+                var controller = FromBody(selfBody);
+                if (controller && controller.isSurvivorEnabled && controller.hasUnspentPoints && SkillOptions.IsBuyKeyHeld(selfBody))
                 {
                     return false;
                 }
@@ -153,117 +274,6 @@ namespace SkillsPlusPlus
             return orig(self, skillSlot);
         }
 
-        private int GetDeployableSameSlotLimit(On.RoR2.CharacterMaster.orig_GetDeployableSameSlotLimit orig, CharacterMaster self, DeployableSlot slot)
-        {
-            int bonusSlots = 0;
-            if (this.isSurvivorEnabled && self == this.playerCharacterMasterController.master)
-            {
-                bonusSlots = EngiSkillModifier.GetDeployableSameSlotBonus(slot);
-            }
-            return orig(self, slot) + bonusSlots;
-        }
-
-        private void OnRecalculateStats(On.RoR2.CharacterBody.orig_RecalculateStats orig, CharacterBody self)
-        {
-            orig(self);
-            if (self == this.body)
-            {
-                this.OnLevelChanged();
-            }
-        }
-
         #endregion
-
-        private void Update()
-        {
-#if DEBUG
-            if (Input.GetKeyDown(KeyCode.Equals) && this.PlayerTeamIndex != TeamIndex.None)
-            {
-                //TeamManager.instance.GiveTeamExperience(body.teamComponent.teamIndex, (ulong)(500 * Time.deltaTime));
-                //TeamManager.instance.SetTeamLevel(this.PlayerTeamIndex, TeamManager.instance.GetTeamLevel(this.PlayerTeamIndex) + 1);
-                CmdGiveSkillPoint();
-            }
-            if (Input.GetKeyDown(KeyCode.Keypad1) && playerCharacterMasterController != null && body != null)
-            {
-                GameObject teleporter = GameObject.Find("Teleporter1(Clone)");
-                Transform spawnLocation = body.transform;
-                if (teleporter != null && teleporter.TryGetComponent(out TeleporterInteraction teleporterInteraction))
-                {
-                    var portalGameObject = GameObject.Instantiate(teleporterInteraction.shopPortalSpawnCard.prefab, spawnLocation.position, spawnLocation.rotation, null);
-                    NetworkServer.Spawn(portalGameObject);
-                }
-            }
-            if (Input.GetKeyDown(KeyCode.Keypad2) && this.playerCharacterMasterController != null)
-            {
-                this.playerCharacterMasterController.master?.inventory.GiveItemString("UtilitySkillMagazine");
-            }
-            if (Input.GetKeyDown(KeyCode.Keypad3) && this.playerCharacterMasterController != null)
-            {
-                this.playerCharacterMasterController.master?.inventory.GiveItemString("ExtraLife");
-            }
-            if (Input.GetKeyDown(KeyCode.Keypad4) && this.playerCharacterMasterController != null)
-            {
-                this.body.skillLocator.ResetSkills();
-            }
-            if (Input.GetKeyDown(KeyCode.Keypad5) && this.playerCharacterMasterController != null)
-            {
-                this.playerCharacterMasterController.master?.inventory.GiveItemString("CIScepter");
-            }
-            if (Input.GetKeyDown(KeyCode.Keypad6) && this.playerCharacterMasterController != null)
-            {
-                this.playerCharacterMasterController.master?.inventory.GiveItemString("Syringe", 5);
-            }
-            if (Input.GetKeyDown(KeyCode.Keypad7) && this.playerCharacterMasterController != null)
-            {
-                this.playerCharacterMasterController.master?.inventory.GiveItemString("LunarPrimaryReplacement");
-                this.playerCharacterMasterController.master?.inventory.GiveItemString("LunarUtilityReplacement");
-                this.playerCharacterMasterController.master?.inventory.GiveItemString("LunarSecondaryReplacement");
-                this.playerCharacterMasterController.master?.inventory.GiveItemString("LunarSpecialReplacement");
-            }
-#endif
-        }
-
-        public void DeductSkillPoints(int amount)
-        {
-            this.unspentSkillPoints -= amount;
-        }
-
-        [Server]
-        public void OnLevelChanged()
-        {
-            int characterLevel = (int)TeamManager.instance.GetTeamLevel(this.PlayerTeamIndex);
-            //Logger.Warn("OnLevelChanged({0}) for team {1}", characterLevel, PlayerTeamIndex);
-            if (this.PlayerTeamIndex == TeamIndex.None)
-            {
-                return;
-            }
-
-            levelsPerSkillPoint = ConVars.ConVars.levelsPerSkillPoint.value;
-            int newSkillPoints = Math.Max(0, SkillPointsAtLevel(characterLevel) - earnedSkillPoints);
-
-            earnedSkillPoints += newSkillPoints;
-            unspentSkillPoints += newSkillPoints;
-        }
-
-        [Command]
-        [Server]
-        private void CmdGiveSkillPoint()
-        {
-            Logger.Debug("Giving points");
-            this.earnedSkillPoints++;
-            this.unspentSkillPoints++;
-        }
-
-        private int SkillPointsAtLevel(int characterLevel)
-        {
-#if DEBUG
-            return characterLevel - 1;
-#else
-            if (levelsPerSkillPoint <= 1) {
-                return characterLevel - 1;
-            }
-            return (characterLevel / this.levelsPerSkillPoint);
-#endif
-        }
     }
 }
