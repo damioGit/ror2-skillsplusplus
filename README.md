@@ -45,7 +45,7 @@ Skills are matched by SkillDef asset name (or `skillName` when the asset has no 
 
 ## Upgrades per level
 
-Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot), -6% cooldown and +1 charge every 3 levels.
+Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot). On top of that, any upgraded skill from another mod and every generic skill gets -6% cooldown if it has a cooldown, and +1 charge every 3 levels if it already has several charges.
 
 ### Commando
 
@@ -60,14 +60,14 @@ Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot)
 | Utility | Tactical Pursuit | dedicated upgrade from EggsSkills |
 | Special | Suppressive Fire | +30% bullets |
 | Special | Frag Grenade | +20% damage and +20% blast size |
-| Special | Sabotage | +10% damage, charges last +3 s, +15% zap radius, +1 charge every 2 levels |
+| Special | Sabotage | +10% damage, explosives last +3 s, +15% zap radius, +1 explosive every 2 levels |
 
 ### Nemesis Commando
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Blade of Cessation | *generic* |
-| Secondary | Single Tap | *generic* |
+| Primary | Blade of Cessation | +6% damage, swings 5% faster |
+| Secondary | Single Tap | +6% damage, +20% range, +1 round every 2 levels |
 | Secondary | Distant Gash | +10% damage, +15% beam speed |
 | Utility | Tactical Roll | *generic* |
 | Special | Submission | +12% damage, +1 bullet per volley |
@@ -166,20 +166,20 @@ Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot)
 |---|---|---|
 | Primary | Trim | +6% damage, swings 5% faster |
 | Primary | Flurry | +6% damage, swings 6% faster |
-| Secondary | Clip | *generic* |
-| Secondary | Planar Manipulation | *generic* |
-| Utility | Brutalize | +10% damage, +10% dash power |
-| Utility | Retaliate | *generic* |
+| Secondary | Clip | +10% damage, +1 snip every 2 levels |
+| Secondary | Planar Manipulation | +10% damage, +15% grab range |
+| Utility | Brutalize | +10% damage, +10% dash power, Insatiable lasts +0.5 s |
+| Utility | Retaliate | +10% damage, parry window +0.08 s |
 | Special | Skewer | +12% damage, throws 8% faster |
 
 ### Nemesis Mercenary
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Splatter | *generic* |
-| Secondary | Cutthroat | *generic* |
+| Primary | Splatter | +6% damage, +1 pellet |
+| Secondary | Cutthroat | +10% damage, +12% lunge distance |
 | Secondary | Perforator | +10% damage, +25% auto-aim radius |
-| Utility | Dispatch | *generic* |
+| Utility | Dispatch | +10% damage, attack speed burst for +0.5 s after blinking |
 | Utility | Devitalize | +10% damage, +12% slide duration |
 | Special | Exploit | +12% damage, +1 target every 2 levels |
 | Special | Proliferate | +12% damage, clone lasts +1.5 s |
@@ -357,7 +357,7 @@ Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot)
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Direct Current | *generic* |
+| Primary | Direct Current | +6% damage, fires 5% faster |
 | Secondary | Release | +10% damage, +10% damage at full Charge |
 | Secondary | Galvanize | +10% damage, +1 maximum orb |
 | Utility | Sidestep | +10% duration |

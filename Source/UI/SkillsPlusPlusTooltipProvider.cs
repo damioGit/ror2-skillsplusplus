@@ -1,4 +1,5 @@
 using RoR2;
+using RoR2.Skills;
 using RoR2.UI;
 using UnityEngine;
 
@@ -8,6 +9,8 @@ namespace SkillsPlusPlus.UI
     internal class SkillUpgradeTooltipProvider : MonoBehaviour
     {
         public string skillName;
+        public SkillDef skillDef;
+        public SkillSlot slot = SkillSlot.None;
         public SkillIcon skillIcon;
 
         private void Awake()
@@ -22,11 +25,22 @@ namespace SkillsPlusPlus.UI
         }
 
         /// <summary>The skill this icon shows: fixed for loadout buttons, the current skill for HUD icons.</summary>
+        internal SkillDef GetSkillDef()
+        {
+            if (skillIcon && skillIcon.targetSkill) return skillIcon.targetSkill.skillDef;
+            return skillDef;
+        }
+
         internal string GetSkillName()
         {
-            if (skillName != null) return skillName;
             if (skillIcon && skillIcon.targetSkill) return SkillUpgrade.SkillName(skillIcon.targetSkill.skillDef);
-            return null;
+            return skillName ?? SkillUpgrade.SkillName(skillDef);
+        }
+
+        internal SkillSlot GetSlot()
+        {
+            if (skillIcon) return skillIcon.targetSkillSlot;
+            return slot;
         }
 
         /// <summary>The local player's level in this skill (HUD only), or -1 when unknown.</summary>

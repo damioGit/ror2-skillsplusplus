@@ -114,6 +114,18 @@ namespace SkillsPlusPlus.Generic
             return modifier == null || modifier.UseGenericCooldownAndStock;
         }
 
+        /// <summary>Generic cooldown reduction only makes sense for skills that actually have a cooldown.</summary>
+        internal static bool GetsGenericCooldown(RoR2.Skills.SkillDef def)
+        {
+            return def && UsesGenericCooldownAndStock(SkillUpgrade.SkillName(def)) && def.baseRechargeInterval > 0.01f && GenericCooldown.Value > 0f;
+        }
+
+        /// <summary>Extra charges only for skills that already work with charges (more than one), not spam attacks.</summary>
+        internal static bool GetsGenericStock(RoR2.Skills.SkillDef def)
+        {
+            return def && UsesGenericCooldownAndStock(SkillUpgrade.SkillName(def)) && def.baseMaxStock > 1 && def.baseRechargeInterval > 0.01f && GenericLevelsPerStock.Value > 0;
+        }
+
         internal static float DefaultDamagePerLevel(SkillSlot slot)
         {
             switch (slot)
@@ -199,9 +211,9 @@ namespace SkillsPlusPlus.Generic
 
             float Reduction(GenericSkill skill)
             {
-                string name = SkillUpgrade.SkillName(skill ? skill.skillDef : null);
-                int level = controller.GetLevel(name);
-                return level > 0 && UsesGenericCooldownAndStock(name) ? 1f - Mathf.Pow(1f - GenericCooldown.Value, level) : 0f;
+                RoR2.Skills.SkillDef def = skill ? skill.skillDef : null;
+                int level = controller.GetLevel(SkillUpgrade.SkillName(def));
+                return level > 0 && GetsGenericCooldown(def) ? 1f - Mathf.Pow(1f - GenericCooldown.Value, level) : 0f;
             }
 
             SkillLocator locator = sender.skillLocator;
@@ -243,9 +255,8 @@ namespace SkillsPlusPlus.Generic
             foreach (GenericSkill skill in skills)
             {
                 if (!skill) continue;
-                string name = SkillUpgrade.SkillName(skill.skillDef);
-                if (!UsesGenericCooldownAndStock(name)) continue;
-                int bonus = controller.GetLevel(name) / every;
+                if (!GetsGenericStock(skill.skillDef)) continue;
+                int bonus = controller.GetLevel(SkillUpgrade.SkillName(skill.skillDef)) / every;
                 if (bonus > 0)
                 {
                     skill.SetBonusStockFromBody(skill.bonusStockFromBody + bonus);

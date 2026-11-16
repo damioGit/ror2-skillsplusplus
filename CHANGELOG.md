@@ -1,5 +1,11 @@
 # Changelog
 
+## What's new in 0.8.1
+- Generic bonuses now only apply where they make sense: cooldown reduction only for skills that have a cooldown, extra charges only for skills that already use more than one charge. Spam primaries no longer show cooldown or charge bonuses.
+- Tooltips list only the bonuses a skill actually gets.
+- More distinct modded upgrades: Seamstress Clip (+1 snip), Planar Manipulation (grab range), Brutalize (longer Insatiable), Retaliate (parry window); Nemesis Commando Blade of Cessation (faster swings) and Single Tap (range, rounds); Nemesis Mercenary Splatter (+1 pellet), Cutthroat (lunge distance), Dispatch (attack speed burst); Ranger Direct Current (fire rate).
+- Fixed Sabotage's description (extra explosives, not charges).
+
 ## What's new in 0.8.0
 - Dedicated upgrades for Executioner, VOL-T and Seamstress, plus more Ranger skills. Modded skills keep the generic cooldown and charge bonuses on top.
 - Tooltips: every skill shows what one level gives, your current level on the HUD, and generic bonuses where they apply. Fixed the tooltip showing a stale skill's text and lingering on item tooltips.

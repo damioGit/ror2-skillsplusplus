@@ -27,7 +27,7 @@ namespace SkillsPlusPlus
     [BepInDependency(R2API.R2API.PluginGUID)]
     [BepInDependency(R2API.Networking.NetworkingAPI.PluginGUID)]
     [BepInDependency("com.KingEnderBrine.ExtendedLoadout", BepInDependency.DependencyFlags.SoftDependency)] //Soft-dependency to make Skills++ load after ExtendedLoadout
-    [BepInPlugin("com.cwmlolzlz.skills", "Skills", "0.8.0")]
+    [BepInPlugin("com.cwmlolzlz.skills", "Skills", "0.8.1")]
     [BepInDependency("pseudopulse.Rebindables")]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod)]
     public sealed class SkillsPlugin : BaseUnityPlugin
@@ -88,7 +88,7 @@ namespace SkillsPlusPlus
             if (provider && provider.TryGetComponent(out SkillUpgradeTooltipProvider tooltipProvider))
             {
                 var tooltipController = self.EnsureComponent<SkillsPlusPlusTooltipController>();
-                tooltipController.Show(tooltipProvider.GetSkillName(), tooltipProvider.GetLevel());
+                tooltipController.Show(tooltipProvider);
             }
             else if (self.TryGetComponent(out SkillsPlusPlusTooltipController existing))
             {
@@ -113,7 +113,9 @@ namespace SkillsPlusPlus
                 {
                     var provider = button.button.gameObject.EnsureComponent<SkillUpgradeTooltipProvider>();
                     provider.skillName = SkillUpgrade.SkillName(skillDef);
-                    SkillsPlusPlus.Logger.Debug(((ScriptableObject)skillDef)?.name);
+                    provider.skillDef = skillDef;
+                    SkillLocator locator = skillSlot ? skillSlot.GetComponent<SkillLocator>() : null;
+                    provider.slot = locator ? locator.FindSkillSlot(skillSlot) : SkillSlot.None;
                 }
             }
 

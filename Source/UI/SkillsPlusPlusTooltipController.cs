@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using RoR2;
+using RoR2.Skills;
 using RoR2.UI;
 using SkillsPlusPlus.Generic;
 using UnityEngine;
@@ -8,8 +10,8 @@ namespace SkillsPlusPlus.UI
 {
     /// <summary>
     /// Adds an "Upgrade" section to skill tooltips: what one level gives, the player's current level (on the HUD),
-    /// and the generic bonuses for skills that use them. Refreshed every time a skill tooltip is shown, since the
-    /// tooltip object is reused between skills.
+    /// and only those generic bonuses the skill actually gets (no cooldown text for skills without a cooldown, no
+    /// extra charges for single-charge skills). Refreshed every time a skill tooltip is shown.
     /// </summary>
     [RequireComponent(typeof(TooltipController))]
     internal class SkillsPlusPlusTooltipController : MonoBehaviour
@@ -36,17 +38,18 @@ namespace SkillsPlusPlus.UI
             upgradeLabel = upgradeRect.GetComponentInChildren<TMPro.TextMeshProUGUI>();
         }
 
-        /// <summary>Shows the upgrade text for <paramref name="skillName"/> (level -1 = unknown, e.g. in the loadout menu).</summary>
-        internal void Show(string skillName, int level)
+        internal void Show(SkillUpgradeTooltipProvider provider)
         {
+            string skillName = provider.GetSkillName();
             skillUpgradeToken = SkillUpgradeTooltipProvider.SkillNameToToken(skillName);
             EnsureRect();
             if (!upgradeRect) return;
 
-            string description = Describe(skillName);
+            string description = Describe(skillName, provider.GetSkillDef(), provider.GetSlot());
             upgradeRect.SetActive(description != null);
             if (description == null || !upgradeLabel) return;
 
+            int level = provider.GetLevel();
             upgradeLabel.text = level > 0
                 ? Language.GetStringFormatted("TOOLTIP_UPGRADE_LEVEL_DESCRIPTION", description, level)
                 : Language.GetStringFormatted("TOOLTIP_UPGRADE_DESCRIPTION", description);
@@ -58,28 +61,32 @@ namespace SkillsPlusPlus.UI
             if (upgradeRect) upgradeRect.SetActive(false);
         }
 
-        private static string Describe(string skillName)
+        private static string Describe(string skillName, SkillDef def, SkillSlot slot)
         {
             if (string.IsNullOrEmpty(skillName)) return null;
-            string token = SkillUpgradeTooltipProvider.SkillNameToToken(skillName);
-            bool hasText = !Language.IsTokenInvalid(token);
-            int cooldown = Mathf.RoundToInt(SlotUpgrades.GenericCooldown.Value * 100f);
-            int every = SlotUpgrades.GenericLevelsPerStock.Value;
+            var parts = new List<string>();
 
+            string token = SkillUpgradeTooltipProvider.SkillNameToToken(skillName);
             if (SlotUpgrades.IsGeneric(skillName))
             {
-                int damage = Mathf.RoundToInt(SlotUpgrades.SecondaryUtilityDamage.Value * 100f);
-                return Language.GetStringFormatted("TOOLTIP_UPGRADE_GENERIC", damage, cooldown, every);
+                int damage = Mathf.RoundToInt(SlotUpgrades.DefaultDamagePerLevel(slot == SkillSlot.None ? SkillSlot.Secondary : slot) * 100f);
+                if (damage > 0) parts.Add(Language.GetStringFormatted("TOOLTIP_UPGRADE_GENERIC_DAMAGE", damage));
             }
-            if (!hasText) return null;
-
-            string text = Language.GetString(token);
-            var modifier = SkillModifierManager.GetSkillModifierByName(skillName);
-            if (modifier != null && modifier.UseGenericCooldownAndStock && SlotUpgrades.GenericEnabled.Value)
+            else if (!Language.IsTokenInvalid(token))
             {
-                text += ", " + Language.GetStringFormatted("TOOLTIP_UPGRADE_GENERIC_EXTRA", cooldown, every);
+                parts.Add(Language.GetString(token));
             }
-            return text;
+            else
+            {
+                return null;
+            }
+
+            if (SlotUpgrades.GetsGenericCooldown(def))
+                parts.Add(Language.GetStringFormatted("TOOLTIP_UPGRADE_GENERIC_COOLDOWN", Mathf.RoundToInt(SlotUpgrades.GenericCooldown.Value * 100f)));
+            if (SlotUpgrades.GetsGenericStock(def))
+                parts.Add(Language.GetStringFormatted("TOOLTIP_UPGRADE_GENERIC_STOCK", SlotUpgrades.GenericLevelsPerStock.Value));
+
+            return parts.Count > 0 ? string.Join(", ", parts) : null;
         }
     }
 }

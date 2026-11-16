@@ -128,8 +128,35 @@ namespace SkillsPlusPlus.Modifiers
             // --- Seamstress. Her numbers come from her own config inside OnEnter, so changes happen afterwards.
             Add("Trim", new[] { "SeamstressMod.Seamstress.SkillStates.Trim" }, enterLate: (s, t, l) => FasterSwing(s, t, 0.05f, l));
             Add("Flurry", new[] { "SeamstressMod.Seamstress.SkillStates.Flurry" }, enterLate: (s, t, l) => FasterSwing(s, t, 0.06f, l));
-            Add("HeartDashSeamstress", new[] { "SeamstressMod.Seamstress.SkillStates.HealthCostDash" }, enterLate: (s, t, l) => ScaleInstance(s, t, "dashPower", 0.10f, l));
+            Add("Clip", new[] { "SeamstressMod.Seamstress.SkillStates.Clip" }, enterLate: (s, t, l) => AddInstanceInt(s, t, "snips", l / 2));
+            Add("PlanarManipulation", new[] { "SeamstressMod.Seamstress.SkillStates.PlanarManipulation" }, enterLate: (s, t, l) =>
+            {
+                ScaleInstance(s, t, "_maxGrabDistance", 0.15f, l);
+                ScaleInstance(s, t, "_minGrabDistance", 0.15f, l);
+                ScaleInstance(s, t, "radius", 0.15f, l);
+            });
+            Add("HeartDashSeamstress", new[] { "SeamstressMod.Seamstress.SkillStates.HealthCostDash" }, enterLate: (s, t, l) =>
+            {
+                ScaleInstance(s, t, "dashPower", 0.10f, l);
+                AddInstanceFloat(s, t, "insatiableDuration", 0.5f * l);
+            });
+            Add("ParrySeamstress", new[] { "SeamstressMod.Seamstress.SkillStates.Parry" }, enterLate: (s, t, l) => AddInstanceFloat(s, t, "duration", 0.08f * l));
             Add("FireSeamstress", new[] { "SeamstressMod.Seamstress.SkillStates.FireScissors" }, enter: (s, t, l) => ScaleStatic(t, "baseDuration", -0.08f, l));
+
+            // --- More Starstorm 2 / Sandswept skills that were on generic upgrades only
+            Add("NemCommandoSwingSword", new[] { "EntityStates.NemCommando.SwingSword2" }, enter: (s, t, l) => ScaleInstance(s, t, "baseDuration", -0.05f, l));
+            Add("NemCommandoShootGunReload", new[] { "EntityStates.NemCommando.ShootGun2" },
+                enter: (s, t, l) => ScaleStatic(t, "range", 0.20f, l),
+                leveledUp: (def, l) => def.baseMaxStock = Originals.Get("NemCommando.SingleTap.stock", def.baseMaxStock) + l / 2);
+            Add("NemMercShotgun", new[] { "EntityStates.NemMerc.FireShotgun" }, enter: (s, t, l) => AddInstanceInt(s, t, "bulletCount", l));
+            Add("NemMercLunge", new[] { "EntityStates.NemMerc.Lunge" }, enter: (s, t, l) => ScaleStatic(t, "maximumDuration", 0.12f, l));
+            // Dispatch: after blinking, a short attack speed burst (War Cry buff), 0.5 s per level. Buffs are host-side.
+            Add("NemMercBlink", new[] { "EntityStates.NemMerc.ShadowStep" }, enter: (s, t, l) =>
+            {
+                if (UnityEngine.Networking.NetworkServer.active && s.characterBody)
+                    s.characterBody.AddTimedBuff(RoR2Content.Buffs.WarCryBuff, 0.5f * l);
+            });
+            Add("Direct Current", new[] { "Sandswept.Survivors.Ranger.States.Primary.DirectCurrent" }, enter: (s, t, l) => ScaleStatic(t, "baseDuration", -0.05f, l));
         }
 
         private static void Add(string skillName, string[] stateTypeNames,
