@@ -21,7 +21,8 @@ namespace SkillsPlusPlus.Modifiers
         internal Action<BaseState, Type, int> onEnterLate;
         internal Action<SkillDef, int> onLeveledUp;
 
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => SlotUpgrades.DefaultDamagePerLevel(slot);
+        // Dedicated modded upgrades follow the original tempo: +15% for primaries, +20% for everything else.
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => slot == SkillSlot.Primary ? 0.15f : 0.20f;
 
         public override bool UseGenericCooldownAndStock => true;
 

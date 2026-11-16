@@ -37,11 +37,11 @@ namespace SkillsPlusPlus.Generic
             GenericEnabled = config.Bind("Generic upgrades", "Upgrade any skill", true,
                 "Lets you spend points on skills that have no dedicated Skills++ upgrade (e.g. survivors from other mods). They get damage, cooldown and stock bonuses.");
             // New key name (was "Primary damage per level" = 0.06) so existing configs pick up the new default.
-            PrimaryDamage = config.Bind("Generic upgrades", "Primary damage bonus per level", 0.10f,
-                "Damage multiplier per level for primary skills without a dedicated upgrade (0.10 = +10%, compounding).");
-            SecondaryUtilityDamage = config.Bind("Generic upgrades", "Secondary/utility damage per level", 0.10f,
+            PrimaryDamage = config.Bind("Generic upgrades", "Primary damage per level (generic)", 0.15f,
+                "Damage multiplier per level for primary skills without a dedicated upgrade (0.15 = +15%, compounding).");
+            SecondaryUtilityDamage = config.Bind("Generic upgrades", "Secondary/utility damage per level (generic)", 0.15f,
                 "Damage multiplier per level for secondary and utility skills.");
-            SpecialDamage = config.Bind("Generic upgrades", "Special damage per level", 0.12f,
+            SpecialDamage = config.Bind("Generic upgrades", "Special damage per level (generic)", 0.20f,
                 "Damage multiplier per level for special skills.");
             GenericCooldown = config.Bind("Generic upgrades", "Cooldown reduction per level", 0.06f,
                 "Cooldown reduction per level for skills without a dedicated upgrade (compounding).");

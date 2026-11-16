@@ -14,7 +14,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("SeekerBodySpiritPunchCrosshair", typeof(SpiritPunch))]
     internal class SeekerSpiritPunchSkillModifier : SimpleSkillModifier<SpiritPunch>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.06f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(SpiritPunch skillState, int level)
         {
@@ -26,7 +26,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("SeekerBodySoulSearch", typeof(SoulSearch))]
     internal class SeekerSoulSearchSkillModifier : SimpleSkillModifier<SoulSearch>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(SoulSearch skillState, int level)
         {
@@ -38,7 +38,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("SeekerBodyUnseenHand", typeof(UnseenHand))]
     internal class SeekerUnseenHandSkillModifier : SimpleSkillModifier<UnseenHand>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(UnseenHand skillState, int level)
         {
@@ -57,7 +57,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("SeekerBodySoulSpiral", typeof(SoulSpiral))]
     internal class SeekerSoulSpiralSkillModifier : SimpleSkillModifier<SoulSpiral>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(SoulSpiral skillState, int level)
         {
@@ -74,7 +74,7 @@ namespace SkillsPlusPlus.Modifiers
     {
         private const string SkillName = "SeekerBodySojourn";
 
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void SetupSkill()
         {
@@ -99,7 +99,7 @@ namespace SkillsPlusPlus.Modifiers
     {
         private const string SkillName = "SeekerBodyReprieve";
 
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(Reprieve skillState, int level)
         {
@@ -128,7 +128,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("SeekerBodyMeditate", typeof(Meditate))]
     internal class SeekerMeditateSkillModifier : SimpleSkillModifier<Meditate>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(Meditate skillState, int level)
         {
@@ -176,7 +176,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("SeekerPalmBlast", typeof(BaseChargePalmBlast), typeof(BaseFirePalmBlast))]
     internal class SeekerPalmBlastSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {

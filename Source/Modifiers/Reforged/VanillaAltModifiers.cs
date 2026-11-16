@@ -21,7 +21,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("CommandoSabotageSpread", typeof(SabotageSpread), typeof(Sabotage), typeof(StickyGrenadeStuckState), typeof(StickyGrenadeExplodeState))]
     internal class CommandoSabotageSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -36,7 +36,7 @@ namespace SkillsPlusPlus.Modifiers
                     StickyGrenadeStuckState.timeBeforeDespawn = Originals.Get("Sticky.timeBeforeDespawn", StickyGrenadeStuckState.timeBeforeDespawn) + 3f * level;
                     break;
                 case StickyGrenadeExplodeState _:
-                    StickyGrenadeExplodeState.blastRadius = MultScaling(Originals.Get("Sticky.blastRadius", StickyGrenadeExplodeState.blastRadius), 0.15f, level);
+                    StickyGrenadeExplodeState.blastRadius = MultScaling(Originals.Get("Sticky.blastRadius", StickyGrenadeExplodeState.blastRadius), 0.20f, level);
                     break;
             }
         }
@@ -46,7 +46,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("ThrowCyclone_Kick", typeof(ThrowCycloneKickable), typeof(CatchCyclone), typeof(FlyOut), typeof(Return))]
     internal class HuntressCycloneSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.08f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -66,7 +66,7 @@ namespace SkillsPlusPlus.Modifiers
     {
         private const string SkillName = "MageBodyFireEarthShards";
 
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.08f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(FireEarthShards skillState, int level)
         {
@@ -96,7 +96,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("LaserCutter", typeof(EngiLaserCutter), typeof(EngiLaserCutter2), typeof(EngiLaserCutter3))]
     internal class EngiLaserCutterSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.06f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -118,7 +118,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("CrocoBreath", typeof(Breath))]
     internal class CrocoBreathSkillModifier : SimpleSkillModifier<Breath>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(Breath skillState, int level)
         {
@@ -173,7 +173,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("TreebotBodyProliferation", typeof(Proliferation), typeof(ProliferationTeleport))]
     internal class TreebotProliferationSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {

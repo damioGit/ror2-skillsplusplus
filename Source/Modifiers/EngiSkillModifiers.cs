@@ -153,7 +153,7 @@ namespace SkillsPlusPlus.Modifiers
         {
             base.OnSkillLeveledUp(level, characterBody, skillDef);
             Logger.Debug("blastRadius: {0}", EntityStates.Engi.SpiderMine.Detonate.blastRadius);
-            skillDef.baseMaxStock = AdditiveScaling(4, 1, level);
+            skillDef.baseMaxStock = (int)AdditiveScaling(4, 0.5f, level);
             EntityStates.Engi.SpiderMine.Detonate.blastRadius = MultScaling(14, 0.25f, level);
         }
     }

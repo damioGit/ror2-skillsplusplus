@@ -68,7 +68,7 @@ namespace SkillsPlusPlus.Modifiers
         public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
         {
             base.OnSkillLeveledUp(level, characterBody, skillDef);
-            skillDef.baseMaxStock = AdditiveScaling(1, 1, level);
+            skillDef.baseMaxStock = (int)AdditiveScaling(1, 0.5f, level);
         }
     }
 

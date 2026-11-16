@@ -1,5 +1,12 @@
 # Changelog
 
+## What's new in 0.9.0 (original tempo)
+- Every new and DLC survivor upgrade now follows the original mod's tempo: about +20% damage per point plus a mechanic (spam primaries +15%, big nukes up to +25%). Seeker, False Son, Drifter, Operator, Acolyte, Enforcer and the 1.4/1.5 vanilla alts were roughly half as strong before.
+- Modded survivors: dedicated upgrades +15% (primary) / +20% (others); generic upgrades +15 / +15 / +20%.
+- Fixed original outliers: CHEF Oil Spill gasoline explosions grew +130% per level compounding (now +30% damage, +15% radius); Acrid Ravenous Bite and Engineer Spider Mines now gain a charge every 2 levels instead of every level; Loader Thunderslam +15% damage (was +5%).
+- Operator: Ascent Protocol shockwave 200% per level, ADMIN-OVERRIDE -10% cooldown, CMD-SWARM rams +20%. False Son Club slam +20% radius. Sabotage zap +20% radius.
+- New Seamstress mechanic, Threading: Trim and Flurry hits have a 5% chance per level to sew a Needle (up to her cap), feeding Clip and jump volleys.
+
 ## What's new in 0.8.2 (balance pass)
 - Damage-only upgrades give at least +10% per level: generic primaries 6% → 10%, Drifter Blunt Force 8% → 10%, Operator pistol 6% → 10%, Operator cores 12% → 15%, Enforcer Shrapnel Grenade and Ripcord 10% → 12%.
 - Fixed a double dip: Brilliant Behemoth explosions copied the skill's slot and got the skill damage bonus a second time.

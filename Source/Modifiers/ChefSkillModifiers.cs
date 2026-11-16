@@ -431,8 +431,8 @@ namespace SkillsPlusPlus.Source.Modifiers
                         Logger.Debug(skillUpgrade.targetBaseSkillName);
                         if (!skillUpgrade.targetBaseSkillName.Contains("ChefOilSpill")) continue;
                         
-                        self.gasolineBlastDamage = MultScaling(self.gasolineBlastDamage, 1.3f, skillUpgrade.skillLevel);
-                        self.gasolineRadius = MultScaling(self.gasolineRadius, 1.3f, skillUpgrade.skillLevel);
+                        self.gasolineBlastDamage = MultScaling(self.gasolineBlastDamage, 0.3f, skillUpgrade.skillLevel);
+                        self.gasolineRadius = MultScaling(self.gasolineRadius, 0.15f, skillUpgrade.skillLevel);
                     }
                 }
             };

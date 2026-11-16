@@ -25,22 +25,22 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("FalseSonBodyClub", typeof(ChargedClubSwing), typeof(ClubGroundSlam))]
     internal class FalseSonClubSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.06f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
             base.OnSkillEnter(skillState, level);
             if (skillState is ChargedClubSwing)
-                ChargedClubSwing.blastRadius = MultScaling(Originals.Get("FS.ChargedClub.blastRadius", ChargedClubSwing.blastRadius), 0.15f, level);
+                ChargedClubSwing.blastRadius = MultScaling(Originals.Get("FS.ChargedClub.blastRadius", ChargedClubSwing.blastRadius), 0.20f, level);
             else if (skillState is ClubGroundSlam)
-                ClubGroundSlam.blastRadius = MultScaling(Originals.Get("FS.ClubSlam.blastRadius", ClubGroundSlam.blastRadius), 0.15f, level);
+                ClubGroundSlam.blastRadius = MultScaling(Originals.Get("FS.ClubSlam.blastRadius", ClubGroundSlam.blastRadius), 0.20f, level);
         }
     }
 
     [SkillLevelModifier("FalseSonBodyLunarSpikes", typeof(LunarSpikes))]
     internal class FalseSonLunarSpikesSkillModifier : SimpleSkillModifier<LunarSpikes>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
         {
@@ -81,7 +81,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("FalseSonLunarStake", typeof(LunarStake))]
     internal class FalseSonLunarStakeSkillModifier : SimpleSkillModifier<LunarStake>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
         {
@@ -135,7 +135,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("FalseSonBodyStep", typeof(StepBrothers))]
     internal class FalseSonStepSkillModifier : SimpleSkillModifier<StepBrothers>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(StepBrothers skillState, int level)
         {
@@ -152,7 +152,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("FalseSonMeridiansWill", typeof(MeridiansWillFire))]
     internal class FalseSonMeridiansWillSkillModifier : SimpleSkillModifier<MeridiansWillFire>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(MeridiansWillFire skillState, int level)
         {
@@ -164,7 +164,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("FalseSonBodyLaser", typeof(LaserFather), typeof(LaserFatherCharged))]
     internal class FalseSonLaserSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -179,7 +179,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("FalseSonBodyLaserBurst", typeof(LaserFatherBurstPrep), typeof(LaserFatherBurst))]
     internal class FalseSonLaserBurstSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -196,13 +196,13 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("BluntForce", new System.Type[0])]
     internal class DrifterBluntForceSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
     }
 
     [SkillLevelModifier("Cleanup", typeof(Cleanup))]
     internal class DrifterCleanupSkillModifier : SimpleSkillModifier<Cleanup>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(Cleanup skillState, int level)
         {
@@ -213,7 +213,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("JunkCube", typeof(JunkCube), typeof(CubeSlam))]
     internal class DrifterJunkCubeSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -226,7 +226,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier(new[] { "Repossess", "Discard" }, typeof(Repossess), typeof(BaggedObject))]
     internal class DrifterRepossessSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -242,7 +242,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("TornadoSlam", typeof(TornadoSlam), typeof(ChargeTornadoSlam))]
     internal class DrifterTornadoSlamSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -259,7 +259,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("FireNanoPistol", typeof(FireNanoPistol))]
     internal class OperatorPistolSkillModifier : SimpleSkillModifier<FireNanoPistol>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
     }
 
     /// <summary>ADMIN-OVERRIDE: shorter cooldown.</summary>
@@ -272,7 +272,7 @@ namespace SkillsPlusPlus.Modifiers
             RecalculateStatsAPI.GetStatCoefficients += (sender, args) =>
             {
                 int level = SkillUpgrade.GetLevel(sender, "Command");
-                if (level > 0) args.secondaryCooldownMultAdd -= 1f - Mathf.Pow(0.92f, level);
+                if (level > 0) args.secondaryCooldownMultAdd -= 1f - Mathf.Pow(0.90f, level);
             };
             // One extra charge every 2 levels, on top of one per drone. The game resets secondary bonus stock
             // in every RecalculateStats, so adding after it is stable.
@@ -297,13 +297,13 @@ namespace SkillsPlusPlus.Modifiers
             base.OnSkillEnter(skillState, level);
             if (skillState is Headbutt headbutt)
             {
-                headbutt.damageCoefficient = MultScaling(headbutt.damageCoefficient, 0.10f, level);
+                headbutt.damageCoefficient = MultScaling(headbutt.damageCoefficient, 0.20f, level);
                 headbutt.blastRadius = MultScaling(headbutt.blastRadius, 0.15f, level);
                 headbutt.shockDuration += 0.3f * level;
             }
             else if (skillState is CommandHeadbutt command)
             {
-                command.damageCoefficient = MultScaling(command.damageCoefficient, 0.10f, level);
+                command.damageCoefficient = MultScaling(command.damageCoefficient, 0.20f, level);
                 command.blastRadius = MultScaling(command.blastRadius, 0.15f, level);
             }
         }
@@ -312,7 +312,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("DroneLeap", typeof(DroneLeap))]
     internal class OperatorAscentSkillModifier : SimpleSkillModifier<DroneLeap>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(DroneLeap skillState, int level)
         {
@@ -332,7 +332,7 @@ namespace SkillsPlusPlus.Modifiers
                 teamIndex = body.teamComponent.teamIndex,
                 position = body.footPosition,
                 radius = 8f,
-                baseDamage = body.damage * 1.5f * level,
+                baseDamage = body.damage * 2.0f * level,
                 baseForce = 800f,
                 crit = body.RollCrit(),
                 procCoefficient = 0.5f,
@@ -349,7 +349,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("CommandShieldFormation", typeof(ShieldFormation), typeof(FireShield))]
     internal class OperatorFirewallSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -362,7 +362,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier(new[] { "DroneBall", "DroneBallShootable" }, typeof(ThrowDroneBall))]
     internal class OperatorCoreSkillModifier : SimpleSkillModifier<ThrowDroneBall>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.25f;
     }
 
     #endregion
@@ -373,7 +373,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("BladeCombo", typeof(BladeCombo), typeof(BladeJumpStrike), typeof(BladeSprintStrike))]
     internal class AcolyteBladeComboSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.06f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -387,7 +387,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("Bola", typeof(BolaWhip), typeof(RoR2.Projectile.BolaProjectileController.GatherState))]
     internal class AcolyteBolaSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -404,7 +404,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("AimSoulJar", typeof(AimSoulJar))]
     internal class AcolyteSoulJarSkillModifier : SimpleSkillModifier<AimSoulJar>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<WightLauncher, object> boosted =
             new System.Runtime.CompilerServices.ConditionalWeakTable<WightLauncher, object>();
@@ -430,7 +430,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("BladeSling", typeof(BladeSling), typeof(BladeDash))]
     internal class AcolyteBladeSlingSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -444,7 +444,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("ThrowJavelin", typeof(ThrowJavelin))]
     internal class AcolyteJavelinSkillModifier : SimpleSkillModifier<ThrowJavelin>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(ThrowJavelin skillState, int level)
         {
@@ -462,7 +462,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("Sacrifice", typeof(EntityStates.Acolyte.Weapon.Sacrifice))]
     internal class AcolyteSacrificeSkillModifier : SimpleSkillModifier<EntityStates.Acolyte.Weapon.Sacrifice>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(EntityStates.Acolyte.Weapon.Sacrifice skillState, int level)
         {
@@ -477,7 +477,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("EnforcerRiotShotgun", typeof(FireRiotShotgun), typeof(FireRiotShotgunShielded))]
     internal class EnforcerRiotShotgunSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.06f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -493,13 +493,13 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("EnforcerClusterGrenade", new System.Type[0])]
     internal class EnforcerClusterGrenadeSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
     }
 
     [SkillLevelModifier("EnforcerProtectAndServeActivate", typeof(ProtectAndServeActivate), typeof(ProtectAndServeDeactivate))]
     internal class EnforcerSteelProtectionSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -530,7 +530,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("EnforcerKineticCharge2", typeof(KineticCharge2Activate), typeof(KineticCharge2ActivateDamageLimited), typeof(KineticChargeExplode))]
     internal class EnforcerSurgeProtectionSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
@@ -548,7 +548,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("EnforcerShieldTackleCharged", typeof(BaseShieldDashPrepCharge))]
     internal class EnforcerShieldTackleSkillModifier : SimpleSkillModifier<BaseShieldDashPrepCharge>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(BaseShieldDashPrepCharge skillState, int level)
         {
@@ -559,13 +559,13 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("EnforcerTearGas", typeof(FireTearGasGrenade))]
     internal class EnforcerRipcordSkillModifier : SimpleSkillModifier<FireTearGasGrenade>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
     }
 
     [SkillLevelModifier("EnforcerCrowdControlDef", typeof(CrowdControlSlamGround))]
     internal class EnforcerRallyPointSkillModifier : SimpleSkillModifier<CrowdControlSlamGround>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
 
         public override void OnSkillEnter(CrowdControlSlamGround skillState, int level)
         {
@@ -576,7 +576,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("ShieldLeap", typeof(ShieldLeap), typeof(ShieldSlamImpact))]
     internal class EnforcerCrashPointSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.25f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {

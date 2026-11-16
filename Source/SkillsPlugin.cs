@@ -27,7 +27,7 @@ namespace SkillsPlusPlus
     [BepInDependency(R2API.R2API.PluginGUID)]
     [BepInDependency(R2API.Networking.NetworkingAPI.PluginGUID)]
     [BepInDependency("com.KingEnderBrine.ExtendedLoadout", BepInDependency.DependencyFlags.SoftDependency)] //Soft-dependency to make Skills++ load after ExtendedLoadout
-    [BepInPlugin("com.cwmlolzlz.skills", "Skills", "0.8.2")]
+    [BepInPlugin("com.cwmlolzlz.skills", "Skills", "0.9.0")]
     [BepInDependency("pseudopulse.Rebindables")]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod)]
     public sealed class SkillsPlugin : BaseUnityPlugin
@@ -79,6 +79,7 @@ namespace SkillsPlusPlus
             Generic.SlotUpgrades.Init(Config);
             Util.ProjectileTweaks.InstallHooks();
             Progression.Init(Config);
+            Modifiers.SeamstressNeedles.Init();
         }
 
         private static void TooltipController_SetTooltipProvider(On.RoR2.UI.TooltipController.orig_SetTooltipProvider orig, TooltipController self, TooltipProvider provider)

@@ -45,7 +45,7 @@ Skills are matched by SkillDef asset name (or `skillName` when the asset has no 
 
 ## Upgrades per level
 
-Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot). On top of that, any upgraded skill from another mod and every generic skill gets -6% cooldown if it has a cooldown, and +1 charge every 3 levels if it already has several charges.
+Every skill can be upgraded. Skills marked *generic* get +15-20% damage (by slot). On top of that, any upgraded skill from another mod and every generic skill gets -6% cooldown if it has a cooldown, and +1 charge every 3 levels if it already has several charges.
 
 ### Commando
 
@@ -60,18 +60,18 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 | Utility | Tactical Pursuit | dedicated upgrade from EggsSkills |
 | Special | Suppressive Fire | +30% bullets |
 | Special | Frag Grenade | +20% damage and +20% blast size |
-| Special | Sabotage | +10% damage, explosives last +3 s, +15% zap radius, +1 explosive every 2 levels |
+| Special | Sabotage | +20% damage, explosives last +3 s, +20% zap radius, +1 explosive every 2 levels |
 
 ### Nemesis Commando
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Blade of Cessation | +6% damage, swings 5% faster |
-| Secondary | Single Tap | +6% damage, +20% range, +1 round every 2 levels |
-| Secondary | Distant Gash | +10% damage, +15% beam speed |
+| Primary | Blade of Cessation | +15% damage, swings 5% faster |
+| Secondary | Single Tap | +20% damage, +20% range, +1 round every 2 levels |
+| Secondary | Distant Gash | +20% damage, +15% beam speed |
 | Utility | Tactical Roll | *generic* |
-| Special | Submission | +12% damage, +1 bullet per volley every 2 levels |
-| Special | Decisive Strike | +12% damage, charges 12% faster |
+| Special | Submission | +20% damage, +1 bullet per volley every 2 levels |
+| Special | Decisive Strike | +20% damage, charges 12% faster |
 
 ### Huntress
 
@@ -80,7 +80,7 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 | Primary | Strafe | +20% range and +20% proc chance |
 | Primary | Flurry | +10% range and +1 arrow fired |
 | Secondary | Laser Glaive | +1 bounce, +10% damage, and +10 units of bounce range |
-| Secondary | Laser Cyclone | +8% damage, +25% catch radius, +10% cooldown refunded on catch, +1 combo cap every 2 levels |
+| Secondary | Laser Cyclone | +20% damage, +25% catch radius, +10% cooldown refunded on catch, +1 combo cap every 2 levels |
 | Secondary | Explosive Arrow | dedicated upgrade from EggsSkills |
 | Utility | Blink | Grants +1 second of crit time |
 | Utility | Phase Blink | Grants +0.5 seconds of crit time |
@@ -120,11 +120,11 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 | Slot | Skill | Per level |
 |---|---|---|
 | Primary | Bouncing Grenades | +1 and +2 to the minimum and maximum grenades fired |
-| Primary | Laser Cutter | +6% damage, +25% turret and drone healing, +10% move speed while cutting, power stages 15% faster |
+| Primary | Laser Cutter | +15% damage, +25% turret and drone healing, +10% move speed while cutting, power stages 15% faster |
 | Primary | Guided Salvo | dedicated upgrade from EggsSkills |
 | Primary | Laser Focus | *generic* |
 | Secondary | Pressure Mines | -10% arming time, +20% damaFge, +20% blast size, and +20% trigger range |
-| Secondary | Spider Mines | +30% trigger range and +20% damage |
+| Secondary | Spider Mines | +30% trigger range, +20% damage, +25% blast radius and +1 mine every 2 levels |
 | Secondary | T-3514 Shock Mines | dedicated upgrade from EggsSkills |
 | Utility | Bubble Shield | +15% duration and +15% size |
 | Utility | Thermal Harpoons | +1 ammo, +20% damage, and +30% range |
@@ -141,7 +141,7 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 | Secondary | Charged Nano-Bomb | +15% damage, +5% max charge time, and +10% blast size |
 | Secondary | Cast Nano-Spear | +20% damage |
 | Utility | Snapfreeze | +30% wall damage and +20% wall length |
-| Utility | Tectonic Blast | +8% damage, +2 shards, -12% spread, burning oiled enemies take +15% damage |
+| Utility | Tectonic Blast | +15% damage, +2 shards, -12% spread, burning oiled enemies take +15% damage |
 | Utility | Quantum Transposition | dedicated upgrade from EggsSkills |
 | Utility | Seismic Spear | *generic* |
 | Special | Flamethrower | +20% range and +20% damage |
@@ -164,25 +164,25 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Trim | +6% damage, swings 5% faster |
-| Primary | Flurry | +6% damage, swings 6% faster |
-| Secondary | Clip | +10% damage, +1 snip every 2 levels |
-| Secondary | Planar Manipulation | +10% damage, +15% grab range |
-| Utility | Brutalize | +10% damage, +10% dash power, Insatiable lasts +0.5 s |
-| Utility | Retaliate | +10% damage, parry window +0.08 s |
-| Special | Skewer | +12% damage, throws 8% faster |
+| Primary | Trim | +15% damage, swings 5% faster, hits have a 5% chance to sew a Needle |
+| Primary | Flurry | +15% damage, swings 6% faster, hits have a 5% chance to sew a Needle |
+| Secondary | Clip | +20% damage, +1 snip every 2 levels |
+| Secondary | Planar Manipulation | +20% damage, +15% grab range |
+| Utility | Brutalize | +20% damage, +10% dash power, Insatiable lasts +0.5 s |
+| Utility | Retaliate | +20% damage, parry window +0.08 s |
+| Special | Skewer | +20% damage, throws 8% faster |
 
 ### Nemesis Mercenary
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Splatter | +6% damage, +1 pellet |
-| Secondary | Cutthroat | +10% damage, +12% lunge distance |
-| Secondary | Perforator | +10% damage, +25% auto-aim radius |
-| Utility | Dispatch | +10% damage, attack speed burst for +0.5 s after blinking |
-| Utility | Devitalize | +10% damage, +12% slide duration |
-| Special | Exploit | +12% damage, +1 target every 2 levels |
-| Special | Proliferate | +12% damage, clone lasts +1.5 s |
+| Primary | Splatter | +15% damage, +1 pellet |
+| Secondary | Cutthroat | +20% damage, +12% lunge distance |
+| Secondary | Perforator | +20% damage, +25% auto-aim radius |
+| Utility | Dispatch | +20% damage, attack speed burst for +0.5 s after blinking |
+| Utility | Devitalize | +20% damage, +12% slide duration |
+| Special | Exploit | +20% damage, +1 target every 2 levels |
+| Special | Proliferate | +20% damage, clone lasts +1.5 s |
 
 ### REX
 
@@ -193,7 +193,7 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 | Secondary | Seed Barrage | +20% radius and +20% damage |
 | Utility | DIRECTIVE: Disperse | +30% range, +20% angle, +20% debuff duration |
 | Utility | Bramble Volley | +20% range, +20% angle, +20% damage |
-| Utility | Proliferation | +10% damage, -3% health cost (min 8%), +5% heal on teleport |
+| Utility | Proliferation | +20% damage, -3% health cost (min 8%), +5% heal on teleport |
 | Special | DIRECTIVE: Harvest | +20% damage, +10% radius, +1% life steal |
 | Special | Tangling Growth | +20% damage, +20% radius, +10% healing rate |
 | Special | DIRECTIVE: Respire | dedicated upgrade from EggsSkills |
@@ -208,7 +208,7 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 | Utility | Charged Gauntlet | +10% max charge, +20% base damage, and +15% velocity based damage |
 | Utility | Thunder Gauntlet | +15% damage, +15% charge speed and +20% cone range |
 | Special | M551 Pylon | +20% damage, +20% range, and +20% rate of fire |
-| Special | Thunderslam | +5% damage, +10% to +100% range based on travel distance, +25% leap height |
+| Special | Thunderslam | +15% damage, +10% to +100% range based on travel distance, +25% leap height |
 | Special | Barrier Buster | dedicated upgrade from EggsSkills |
 
 ### Acrid
@@ -218,11 +218,11 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 | Primary | Vicious Wounds | +20% normal damage, +25% combo finisher damage, and +15% attack speed |
 | Primary | Caustic Spray | dedicated upgrade from EggsSkills |
 | Secondary | Neurotoxin | +20% damage, +30% projectile speed, and +30% blast radius per level. +1 stock |
-| Secondary | Ravenous Bite | +20% damage and +1 stock |
+| Secondary | Ravenous Bite | +20% damage and +1 stock every 2 levels |
 | Utility | Caustic Leap | +20% blast damage, +30% acid pool damage, and +20% acid pool size |
 | Utility | Frenzied Leap | +25% blast damage and +15% refunded time |
 | Special | Epidemic | +5 infection bounces, +20% infection range, and +20% on hit damage |
-| Special | Cloying Breath | +12% damage, cloud lasts +1.5 s and is 15% bigger, slows enemies inside |
+| Special | Cloying Breath | +20% damage, cloud lasts +1.5 s and is 15% bigger, slows enemies inside |
 | Special | Expunge | dedicated upgrade from EggsSkills |
 
 ### Captain
@@ -241,20 +241,20 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Service Pistol | +6% damage, +10% bullet size |
-| Primary | Deadly Voltage | +6% damage, +10% range, +1 chain every 2 levels |
-| Secondary | Ion Manipulators | +10% damage, +1 maximum Ion Charge every 2 levels |
+| Primary | Service Pistol | +15% damage, +10% bullet size |
+| Primary | Deadly Voltage | +15% damage, +10% range, +1 chain every 2 levels |
+| Secondary | Ion Manipulators | +20% damage, +1 maximum Ion Charge every 2 levels |
 | Secondary | Consecration | +0.2 s cooldown reduction per charge, +1% healing |
-| Utility | Crowd Dispersion | +10% damage, fear lasts +0.5 s, +10% radius |
-| Special | Execution | +12% damage, +12% slam radius |
+| Utility | Crowd Dispersion | +20% damage, fear lasts +0.5 s, +10% radius |
+| Special | Execution | +20% damage, +12% slam radius |
 
 ### Chirr
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Razor Leaves | +6% damage, +1 leaf |
+| Primary | Razor Leaves | +15% damage, +1 leaf |
 | Secondary | Soothing Venom | *generic* |
-| Utility | Abduct | +10% damage, +15% grab radius |
+| Utility | Abduct | +20% damage, +15% grab radius |
 | Special | Symbiotic Link | *generic* |
 
 ### Railgunner
@@ -284,25 +284,25 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Spirit Punch | +6% damage, +3% damage per Tranquility stack |
-| Secondary | Unseen Hand | +10% damage, +20% range, heals +1.5% of damage dealt |
-| Secondary | Soul Spiral | +10% damage, +1 maximum orb (up to +4) |
-| Utility | Sojourn | +12% damage, -1% health cost per tick (min 3.5%), +12% explosion size |
-| Utility | Reprieve | +10% damage, +8% barrier, +3% barrier for allies |
-| Special | Meditate | +12% damage, +1 s to enter the sequence (up to +4 s), smaller penalties. Level 3+: first wrong arrow is forgiven |
-| Special | Palm Blast | +15% damage, charges 15% faster, 15% bigger hand. Level 2+: Tranquility after hitting 2 characters |
+| Primary | Spirit Punch | +15% damage, +3% damage per Tranquility stack |
+| Secondary | Unseen Hand | +20% damage, +20% range, heals +1.5% of damage dealt |
+| Secondary | Soul Spiral | +15% damage, +1 maximum orb (up to +4) |
+| Utility | Sojourn | +20% damage, -1% health cost per tick (min 3.5%), +12% explosion size |
+| Utility | Reprieve | +15% damage, +8% barrier, +3% barrier for allies |
+| Special | Meditate | +20% damage, +1 s to enter the sequence (up to +4 s), smaller penalties. Level 3+: first wrong arrow is forgiven |
+| Special | Palm Blast | +20% damage, charges 15% faster, 15% bigger hand. Level 2+: Tranquility after hitting 2 characters |
 
 ### False Son
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Club of the Forsaken | +6% damage, +15% slam radius |
-| Secondary | Lunar Spikes | +10% damage, +1 spike, spikes regenerate on their own (faster each level, at most every 2 s) |
-| Secondary | Lunar Stakes | +10% damage, lightning arcs to +1 enemy, +1 stake every 2 levels |
-| Utility | Step of the Brothers | +10% damage, +20% blast radius, +1 use every 2 levels |
-| Utility | Meridian's Will | +10% damage, passive tripled for +0.75 s, +20% pull radius |
-| Special | Laser of the Father | +12% damage, +0.5 s duration, charges 15% faster |
-| Special | Laser Burst | +15% damage, refills +12% more spikes |
+| Primary | Club of the Forsaken | +15% damage, +20% slam radius |
+| Secondary | Lunar Spikes | +15% damage, +1 spike, spikes regenerate on their own (faster each level, at most every 2 s) |
+| Secondary | Lunar Stakes | +20% damage, lightning arcs to +1 enemy, +1 stake every 2 levels |
+| Utility | Step of the Brothers | +15% damage, +20% blast radius, +1 use every 2 levels |
+| Utility | Meridian's Will | +15% damage, passive tripled for +0.75 s, +20% pull radius |
+| Special | Laser of the Father | +20% damage, +0.5 s duration, charges 15% faster |
+| Special | Laser Burst | +20% damage, refills +12% more spikes |
 
 ### CHEF
 
@@ -312,7 +312,7 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 | Secondary | Sear | +0.5% health on hit and +25% attack speed   [Boosted] +1 extra fireball |
 | Secondary | Ice Box | dedicated upgrade |
 | Utility | Roll | dedicated upgrade |
-| Utility | Oil Spill | +2 oil jumps   [Boosted] +2 boosted oil jumps |
+| Utility | Oil Spill | +2 oil jumps, gasoline explosions deal +30% damage with +15% radius  [Boosted] +2 boosted oil jumps |
 | Special | Glaze | +3 extra oil globs |
 | Special | Yes, CHEF! | Temporarily increase skill points of the next used skill by +1. |
 
@@ -320,23 +320,23 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | H3-11 OCR Custom | +10% damage |
-| Secondary | ADMIN-OVERRIDE | -8% cooldown, +1 charge every 2 levels |
-| Secondary | CMD-SWARM | drone rams: +10% damage, +15% radius, +0.3 s shock |
-| Utility | Ascent Protocol | +10% damage, +10% leap speed, landing sends a shockwave for 150% damage |
-| Utility | FIREWALL | +12% damage, +20% shield duration |
-| Special | Ejection Core | +15% damage |
-| Special | Amp Core | +15% damage |
+| Primary | H3-11 OCR Custom | +15% damage |
+| Secondary | ADMIN-OVERRIDE | -10% cooldown, +1 charge every 2 levels |
+| Secondary | CMD-SWARM | drone rams: +20% damage, +15% radius, +0.3 s shock |
+| Utility | Ascent Protocol | +15% damage, +10% leap speed, landing sends a shockwave for 200% damage |
+| Utility | FIREWALL | +20% damage, +20% shield duration |
+| Special | Ejection Core | +25% damage |
+| Special | Amp Core | +25% damage |
 
 ### Drifter
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Blunt Force | +10% damage |
-| Secondary | Cleanup | +10% damage, +1 debris |
-| Secondary | Junk Cube | +10% damage, +5% junk drop chance |
-| Utility | Repossess | +10% damage, monsters take 25% longer to break free |
-| Utility | Tornado Slam | +10% damage, +25% extra spin time per bounce |
+| Primary | Blunt Force | +20% damage |
+| Secondary | Cleanup | +15% damage, +1 debris |
+| Secondary | Junk Cube | +20% damage, +5% junk drop chance |
+| Utility | Repossess | +20% damage, monsters take 25% longer to break free |
+| Utility | Tornado Slam | +20% damage, +25% extra spin time per bounce |
 | Special | Salvage | +1 temporary item |
 | Special | Tinker | +25% projectile size and debuff duration. Gain half a temporary item when tinkering with items every two levels. |
 
@@ -344,22 +344,22 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Trenchbroom | +6% damage, damage falloff starts 5 m later |
-| Primary | Shrapnel Grenade | +12% damage |
-| Secondary | Steel Protection | +10% damage, +20% deflect damage, -10% stance slow, first parry refunds 0.5 s utility cooldown |
-| Secondary | Surge Protection | +12% damage, +1 s duration, absorbs +12% max health, +15% explosion radius |
-| Utility | Shield Tackle | +10% damage, +12% charge speed |
-| Utility | Ripcord | +12% damage |
-| Special | Rally Point | +12% damage, +20% slam radius |
-| Special | Crash Point | +20% damage, +15% impact radius, impact slows nearby enemies |
+| Primary | Trenchbroom | +15% damage, damage falloff starts 5 m later |
+| Primary | Shrapnel Grenade | +20% damage |
+| Secondary | Steel Protection | +20% damage, +20% deflect damage, -10% stance slow, first parry refunds 0.5 s utility cooldown |
+| Secondary | Surge Protection | +20% damage, +1 s duration, absorbs +12% max health, +15% explosion radius |
+| Utility | Shield Tackle | +20% damage, +12% charge speed |
+| Utility | Ripcord | +20% damage |
+| Special | Rally Point | +20% damage, +20% slam radius |
+| Special | Crash Point | +25% damage, +15% impact radius, impact slows nearby enemies |
 
 ### Ranger
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Direct Current | +6% damage, fires 5% faster |
-| Secondary | Release | +10% damage, +10% damage at full Charge |
-| Secondary | Galvanize | +10% damage, +1 maximum orb |
+| Primary | Direct Current | +15% damage, fires 5% faster |
+| Secondary | Release | +20% damage, +10% damage at full Charge |
+| Secondary | Galvanize | +20% damage, +1 maximum orb |
 | Utility | Sidestep | +10% duration |
 | Special | Overdrive | *generic* |
 
@@ -367,19 +367,19 @@ Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Galvanic Bolt | +6% damage, +15% zap radius and range |
-| Secondary | Tempest Sphere | +10% damage, +10% tick rate |
-| Utility | Static Snare | +10% damage, +15% explosion radius, +20% damage on the zip |
-| Special | Signal Overload | +12% damage, +0.4 s duration, +10% radius |
+| Primary | Galvanic Bolt | +15% damage, +15% zap radius and range |
+| Secondary | Tempest Sphere | +20% damage, +10% tick rate |
+| Utility | Static Snare | +20% damage, +15% explosion radius, +20% damage on the zip |
+| Special | Signal Overload | +20% damage, +0.4 s duration, +10% radius |
 
 ### Acolyte
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Blade Slice | +6% damage, +1 quickstrike every 2 levels |
-| Secondary | Bola Throw | +10% damage, gathers +1 enemy |
-| Secondary | Soul Jar | +10% damage, +1 wight from each haunted kill |
-| Utility | Blade Sling | +10% damage, Blade Dash grants +0.3 s invulnerability |
-| Utility | Javelin | +10% damage, +20% explosion radius |
-| Special | Sacrifice | +12% damage, +1 Conviction every 2 levels (up to +2) |
+| Primary | Blade Slice | +15% damage, +1 quickstrike every 2 levels |
+| Secondary | Bola Throw | +20% damage, gathers +1 enemy |
+| Secondary | Soul Jar | +20% damage, +1 wight from each haunted kill |
+| Utility | Blade Sling | +20% damage, Blade Dash grants +0.3 s invulnerability |
+| Utility | Javelin | +20% damage, +20% explosion radius |
+| Special | Sacrifice | +20% damage, +1 Conviction every 2 levels (up to +2) |
 
