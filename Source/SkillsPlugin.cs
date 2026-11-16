@@ -78,6 +78,7 @@ namespace SkillsPlusPlus
             Director.CalmerDirector.Init(Config);
             Generic.SlotUpgrades.Init(Config);
             Util.ProjectileTweaks.InstallHooks();
+            Progression.Init(Config);
         }
 
         private static void TooltipController_SetTooltipProvider(On.RoR2.UI.TooltipController.orig_SetTooltipProvider orig, TooltipController self, TooltipProvider provider)
@@ -210,15 +211,12 @@ namespace SkillsPlusPlus
             }
         }
         
-        // void Update()
-        // {
-        //     if (Input.GetKeyUp(KeyCode.F4))
-        //     {
-        //         UnityHotReload.LoadNewAssemblyVersion(
-        //             typeof(SkillsPlugin).Assembly, // The currently loaded assembly to replace.
-        //             System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Info.Location), "Skills.dll")  // The path to the newly compiled DLL.
-        //         );
-        //     }
-        // }
+        private void Update()
+        {
+            if (Run.instance)
+            {
+                Progression.PollRespecKey();
+            }
+        }
     }
 }

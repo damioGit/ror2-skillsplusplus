@@ -19,6 +19,7 @@ namespace SkillsPlusPlus.Networking
         {
             NetworkingAPI.RegisterMessageType<SyncSkillPointsMessage>();
             NetworkingAPI.RegisterMessageType<BuySkillMessage>();
+            NetworkingAPI.RegisterMessageType<RespecMessage>();
         }
     }
 
@@ -128,6 +129,33 @@ namespace SkillsPlusPlus.Networking
             if (masterObject && masterObject.TryGetComponent(out SkillPointsController controller))
             {
                 controller.ServerTryBuy(skillName);
+            }
+        }
+    }
+
+    /// <summary>Client to host: refund all spent skill points for this master.</summary>
+    internal class RespecMessage : INetMessage
+    {
+        private NetworkInstanceId masterId;
+
+        public RespecMessage() { }
+
+        internal RespecMessage(NetworkInstanceId masterId)
+        {
+            this.masterId = masterId;
+        }
+
+        public void Serialize(NetworkWriter writer) => writer.Write(masterId);
+
+        public void Deserialize(NetworkReader reader) => masterId = reader.ReadNetworkId();
+
+        public void OnReceived()
+        {
+            if (!NetworkServer.active) return;
+            GameObject masterObject = RoR2.Util.FindNetworkObject(masterId);
+            if (masterObject && masterObject.TryGetComponent(out SkillPointsController controller))
+            {
+                Progression.AnnounceRespec(controller, controller.ServerTryRespec(out string reason), reason);
             }
         }
     }

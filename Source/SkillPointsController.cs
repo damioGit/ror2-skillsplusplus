@@ -108,8 +108,9 @@ namespace SkillsPlusPlus
             if (team != TeamIndex.None && TeamManager.instance)
             {
                 int teamLevel = (int)TeamManager.instance.GetTeamLevel(team);
-                earnedSkillPoints = Math.Max(earnedSkillPoints, SkillPointsAtLevel(teamLevel));
+                levelPoints = Math.Max(levelPoints, SkillPointsAtLevel(teamLevel));
             }
+            earnedSkillPoints = levelPoints + bonusPoints;
             RecomputeUnspent();
 
             if (forceSync || previousEarned != earnedSkillPoints || previousUnspent != unspentSkillPoints)
@@ -146,13 +147,53 @@ namespace SkillsPlusPlus
             RefreshBodyUpgrades();
         }
 
-        /// <summary>Debug helper: grants one bonus point.</summary>
-        internal void ServerGiveBonusPoint()
+        // Points from team level and bonus points (teleporter, stages, debug) are tracked separately so a bonus
+        // point is never swallowed by the next level-based recalculation.
+        private int levelPoints;
+        private int bonusPoints;
+
+        /// <summary>Grants bonus points on top of the level-based ones.</summary>
+        internal void ServerGiveBonusPoint(int amount = 1)
         {
-            if (!NetworkServer.active) return;
-            earnedSkillPoints++;
+            if (!NetworkServer.active || amount <= 0) return;
+            bonusPoints += amount;
+            earnedSkillPoints = levelPoints + bonusPoints;
             RecomputeUnspent();
             ServerSync();
+        }
+
+        /// <summary>
+        /// Refunds every point spent by this player. Returns false (and why) when not allowed: outside the Bazaar
+        /// when that is required, or not enough lunar coins for the configured cost.
+        /// </summary>
+        internal bool ServerTryRespec(out string reason)
+        {
+            reason = null;
+            if (!NetworkServer.active) { reason = "not host"; return false; }
+            if (skillLevels.Count == 0) { reason = "nothing to refund"; return false; }
+            if (Progression.RespecOnlyInBazaar.Value && !IsInBazaar())
+            {
+                reason = "respec is only available in the Bazaar Between Time";
+                return false;
+            }
+            NetworkUser user = playerCharacterMasterController ? playerCharacterMasterController.networkUser : null;
+            uint cost = (uint)Math.Max(0, Progression.RespecLunarCoinCost.Value);
+            if (cost > 0)
+            {
+                if (!user || user.lunarCoins < cost) { reason = $"needs {cost} lunar coin(s)"; return false; }
+                user.DeductLunarCoins(cost);
+            }
+            skillLevels.Clear();
+            RecomputeUnspent();
+            ServerSync();
+            RefreshBodyUpgrades();
+            return true;
+        }
+
+        private static bool IsInBazaar()
+        {
+            SceneDef scene = SceneCatalog.GetSceneDefForCurrentScene();
+            return scene && scene.cachedName == "bazaar";
         }
 
         private void RecomputeUnspent()
@@ -203,6 +244,19 @@ namespace SkillsPlusPlus
                 skillLevels[pair.Key] = pair.Value;
             }
             RefreshBodyUpgrades();
+        }
+
+        /// <summary>Asks the host to refund all spent points. Works for the host itself too.</summary>
+        public void RequestRespec()
+        {
+            if (NetworkServer.active)
+            {
+                Progression.AnnounceRespec(this, ServerTryRespec(out string reason), reason);
+            }
+            else if (NetworkClient.active)
+            {
+                new RespecMessage(MasterNetId).Send(NetworkDestination.Server);
+            }
         }
 
         /// <summary>Asks the host to buy one level of a skill. Works for the host itself too.</summary>
