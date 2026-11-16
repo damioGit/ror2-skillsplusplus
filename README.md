@@ -45,7 +45,7 @@ Skills are matched by SkillDef asset name (or `skillName` when the asset has no 
 
 ## Upgrades per level
 
-Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot). On top of that, any upgraded skill from another mod and every generic skill gets -6% cooldown if it has a cooldown, and +1 charge every 3 levels if it already has several charges.
+Every skill can be upgraded. Skills marked *generic* get +10-12% damage (by slot). On top of that, any upgraded skill from another mod and every generic skill gets -6% cooldown if it has a cooldown, and +1 charge every 3 levels if it already has several charges.
 
 ### Commando
 
@@ -70,7 +70,7 @@ Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot)
 | Secondary | Single Tap | +6% damage, +20% range, +1 round every 2 levels |
 | Secondary | Distant Gash | +10% damage, +15% beam speed |
 | Utility | Tactical Roll | *generic* |
-| Special | Submission | +12% damage, +1 bullet per volley |
+| Special | Submission | +12% damage, +1 bullet per volley every 2 levels |
 | Special | Decisive Strike | +12% damage, charges 12% faster |
 
 ### Huntress
@@ -243,7 +243,7 @@ Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot)
 |---|---|---|
 | Primary | Service Pistol | +6% damage, +10% bullet size |
 | Primary | Deadly Voltage | +6% damage, +10% range, +1 chain every 2 levels |
-| Secondary | Ion Manipulators | +10% damage, +1 maximum Ion Charge |
+| Secondary | Ion Manipulators | +10% damage, +1 maximum Ion Charge every 2 levels |
 | Secondary | Consecration | +0.2 s cooldown reduction per charge, +1% healing |
 | Utility | Crowd Dispersion | +10% damage, fear lasts +0.5 s, +10% radius |
 | Special | Execution | +12% damage, +12% slam radius |
@@ -284,20 +284,20 @@ Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot)
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Spirit Punch | +6% damage, +5% damage per Tranquility stack |
+| Primary | Spirit Punch | +6% damage, +3% damage per Tranquility stack |
 | Secondary | Unseen Hand | +10% damage, +20% range, heals +1.5% of damage dealt |
-| Secondary | Soul Spiral | +10% damage, +1 maximum orb |
+| Secondary | Soul Spiral | +10% damage, +1 maximum orb (up to +4) |
 | Utility | Sojourn | +12% damage, -1% health cost per tick (min 3.5%), +12% explosion size |
 | Utility | Reprieve | +10% damage, +8% barrier, +3% barrier for allies |
-| Special | Meditate | +12% damage, +1 s to enter the sequence, smaller penalties. Level 3+: first wrong arrow is forgiven |
-| Special | Palm Blast | +20% damage, charges 15% faster, 15% bigger hand. Level 2+: Tranquility after hitting 2 characters |
+| Special | Meditate | +12% damage, +1 s to enter the sequence (up to +4 s), smaller penalties. Level 3+: first wrong arrow is forgiven |
+| Special | Palm Blast | +15% damage, charges 15% faster, 15% bigger hand. Level 2+: Tranquility after hitting 2 characters |
 
 ### False Son
 
 | Slot | Skill | Per level |
 |---|---|---|
 | Primary | Club of the Forsaken | +6% damage, +15% slam radius |
-| Secondary | Lunar Spikes | +10% damage, +1 spike, spikes regenerate on their own (faster each level) |
+| Secondary | Lunar Spikes | +10% damage, +1 spike, spikes regenerate on their own (faster each level, at most every 2 s) |
 | Secondary | Lunar Stakes | +10% damage, lightning arcs to +1 enemy, +1 stake every 2 levels |
 | Utility | Step of the Brothers | +10% damage, +20% blast radius, +1 use every 2 levels |
 | Utility | Meridian's Will | +10% damage, passive tripled for +0.75 s, +20% pull radius |
@@ -320,19 +320,19 @@ Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot)
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | H3-11 OCR Custom | +6% damage |
+| Primary | H3-11 OCR Custom | +10% damage |
 | Secondary | ADMIN-OVERRIDE | -8% cooldown, +1 charge every 2 levels |
 | Secondary | CMD-SWARM | drone rams: +10% damage, +15% radius, +0.3 s shock |
 | Utility | Ascent Protocol | +10% damage, +10% leap speed, landing sends a shockwave for 150% damage |
 | Utility | FIREWALL | +12% damage, +20% shield duration |
-| Special | Ejection Core | +12% damage |
-| Special | Amp Core | +12% damage |
+| Special | Ejection Core | +15% damage |
+| Special | Amp Core | +15% damage |
 
 ### Drifter
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Blunt Force | +8% damage |
+| Primary | Blunt Force | +10% damage |
 | Secondary | Cleanup | +10% damage, +1 debris |
 | Secondary | Junk Cube | +10% damage, +5% junk drop chance |
 | Utility | Repossess | +10% damage, monsters take 25% longer to break free |
@@ -345,11 +345,11 @@ Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot)
 | Slot | Skill | Per level |
 |---|---|---|
 | Primary | Trenchbroom | +6% damage, damage falloff starts 5 m later |
-| Primary | Shrapnel Grenade | +10% damage |
+| Primary | Shrapnel Grenade | +12% damage |
 | Secondary | Steel Protection | +10% damage, +20% deflect damage, -10% stance slow, first parry refunds 0.5 s utility cooldown |
 | Secondary | Surge Protection | +12% damage, +1 s duration, absorbs +12% max health, +15% explosion radius |
 | Utility | Shield Tackle | +10% damage, +12% charge speed |
-| Utility | Ripcord | +10% damage |
+| Utility | Ripcord | +12% damage |
 | Special | Rally Point | +12% damage, +20% slam radius |
 | Special | Crash Point | +20% damage, +15% impact radius, impact slows nearby enemies |
 
@@ -381,5 +381,5 @@ Every skill can be upgraded. Skills marked *generic* get +6-12% damage (by slot)
 | Secondary | Soul Jar | +10% damage, +1 wight from each haunted kill |
 | Utility | Blade Sling | +10% damage, Blade Dash grants +0.3 s invulnerability |
 | Utility | Javelin | +10% damage, +20% explosion radius |
-| Special | Sacrifice | +12% damage, +1 Conviction every 2 levels |
+| Special | Sacrifice | +12% damage, +1 Conviction every 2 levels (up to +2) |
 

@@ -56,7 +56,7 @@ namespace SkillsPlusPlus.Modifiers
             Add("GrabDash", new[] { "EntityStates.Chirr.GrabDash" }, enter: (s, t, l) => ScaleStatic(t, "maxGrabRadius", 0.15f, l));
 
             // --- Nemesis Commando (Starstorm 2)
-            Add("NemCommandoSubmission", new[] { "EntityStates.NemCommando.Submission" }, enter: (s, t, l) => AddStaticInt(t, "BulletCount", l));
+            Add("NemCommandoSubmission", new[] { "EntityStates.NemCommando.Submission" }, enter: (s, t, l) => AddStaticInt(t, "BulletCount", l / 2));
             Add("NemCommandoSwordBeam", new[] { "EntityStates.NemCommando.SwordBeam" }, enter: (s, t, l) => ScaleStatic(t, "projectileSpeed", 0.15f, l));
             Add("NemCommandoBossAttack", new[] { "EntityStates.Nemmando.BossAttackCharge" }, enter: (s, t, l) => ScaleStatic(t, "baseChargeDuration", -0.12f, l));
 
@@ -74,7 +74,7 @@ namespace SkillsPlusPlus.Modifiers
                 AddInstanceInt(s, t, "attackFireCount", l / 2);
             });
             Add("sdExe2ChargeIons", new[] { "EntityStates.Executioner2.ChargeGun", "EntityStates.Executioner2.FireChargeGun" },
-                leveledUp: (def, l) => def.baseMaxStock = Originals.Get("Exe2.Ions.stock", def.baseMaxStock) + l);
+                leveledUp: (def, l) => def.baseMaxStock = Originals.Get("Exe2.Ions.stock", def.baseMaxStock) + l / 2);
             Add("sdExe2ChargeConsecration", new[] { "EntityStates.Executioner2.ChargeConsecration", "EntityStates.Executioner2.Consecration" }, enter: (s, t, l) =>
             {
                 AddStaticFloat(t, "cooldownDeduction", 0.2f * l);

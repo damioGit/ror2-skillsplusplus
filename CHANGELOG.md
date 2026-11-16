@@ -1,5 +1,10 @@
 # Changelog
 
+## What's new in 0.8.2 (balance pass)
+- Damage-only upgrades give at least +10% per level: generic primaries 6% → 10%, Drifter Blunt Force 8% → 10%, Operator pistol 6% → 10%, Operator cores 12% → 15%, Enforcer Shrapnel Grenade and Ripcord 10% → 12%.
+- Fixed a double dip: Brilliant Behemoth explosions copied the skill's slot and got the skill damage bonus a second time.
+- Toned down upgrades that scaled out of control: Spirit Punch +3% per Tranquility stack (was +5%), Palm Blast +15% damage (was 20%), Meditate time bonus capped at +4 s, Soul Spiral capped at +4 orbs, Lunar Spikes regen at most every 2 s, Sacrifice capped at +2 Convictions, Executioner ion charges and Nemesis Commando Submission bullets now every 2 levels.
+
 ## What's new in 0.8.1
 - Generic bonuses now only apply where they make sense: cooldown reduction only for skills that have a cooldown, extra charges only for skills that already use more than one charge. Spam primaries no longer show cooldown or charge bonuses.
 - Tooltips list only the bonuses a skill actually gets.

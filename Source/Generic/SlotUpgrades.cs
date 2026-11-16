@@ -36,8 +36,9 @@ namespace SkillsPlusPlus.Generic
         {
             GenericEnabled = config.Bind("Generic upgrades", "Upgrade any skill", true,
                 "Lets you spend points on skills that have no dedicated Skills++ upgrade (e.g. survivors from other mods). They get damage, cooldown and stock bonuses.");
-            PrimaryDamage = config.Bind("Generic upgrades", "Primary damage per level", 0.06f,
-                "Damage multiplier per level for primary skills (0.06 = +6%, compounding).");
+            // New key name (was "Primary damage per level" = 0.06) so existing configs pick up the new default.
+            PrimaryDamage = config.Bind("Generic upgrades", "Primary damage bonus per level", 0.10f,
+                "Damage multiplier per level for primary skills without a dedicated upgrade (0.10 = +10%, compounding).");
             SecondaryUtilityDamage = config.Bind("Generic upgrades", "Secondary/utility damage per level", 0.10f,
                 "Damage multiplier per level for secondary and utility skills.");
             SpecialDamage = config.Bind("Generic upgrades", "Special damage per level", 0.12f,
@@ -173,7 +174,10 @@ namespace SkillsPlusPlus.Generic
 
         private static void TakeDamageProcess(On.RoR2.HealthComponent.orig_TakeDamageProcess orig, HealthComponent self, DamageInfo damageInfo)
         {
-            if (NetworkServer.active && damageInfo != null && damageInfo.attacker && damageInfo.damage > 0f
+            // Skip secondary damage that copies the skill's damage type from an already-boosted hit, e.g. Brilliant
+            // Behemoth's explosion (no inflictor, proc coefficient 0); otherwise the bonus would apply twice.
+            bool derivedFromHit = damageInfo != null && !damageInfo.inflictor && damageInfo.procCoefficient <= 0f;
+            if (NetworkServer.active && damageInfo != null && !derivedFromHit && damageInfo.attacker && damageInfo.damage > 0f
                 && damageInfo.attacker.TryGetComponent(out CharacterBody attacker))
             {
                 var controller = SkillPointsController.FromBody(attacker);

@@ -18,7 +18,7 @@ namespace SkillsPlusPlus.Modifiers
 
         public override void OnSkillEnter(SpiritPunch skillState, int level)
         {
-            skillState.dmgBuffIncrease += 0.05f * level;
+            skillState.dmgBuffIncrease += 0.03f * level;
         }
     }
 
@@ -63,7 +63,7 @@ namespace SkillsPlusPlus.Modifiers
         {
             if (skillState.characterBody && skillState.characterBody.TryGetComponent(out SeekerSoulSpiralManager manager))
             {
-                manager.soulSpiralLimit = 6 + level;
+                manager.soulSpiralLimit = 6 + Mathf.Min(level, 4);
             }
         }
     }
@@ -132,7 +132,7 @@ namespace SkillsPlusPlus.Modifiers
 
         public override void OnSkillEnter(Meditate skillState, int level)
         {
-            skillState.duration += 1f * level;
+            skillState.duration += Mathf.Min(4f, 1f * level);
             skillState.timePenalty = Mathf.Max(0.2f, skillState.timePenalty - 0.2f * level);
             skillState.failureCooldownPenalty = Mathf.Max(0f, skillState.failureCooldownPenalty - 1f * level);
         }
@@ -176,7 +176,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("SeekerPalmBlast", typeof(BaseChargePalmBlast), typeof(BaseFirePalmBlast))]
     internal class SeekerPalmBlastSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {

@@ -68,7 +68,7 @@ namespace SkillsPlusPlus.Modifiers
 
                 Timer timer = timers.GetOrCreateValue(self);
                 timer.value += Time.fixedDeltaTime;
-                float interval = Mathf.Max(1.5f, 4.5f - 0.5f * level);
+                float interval = Mathf.Max(2.0f, 4.5f - 0.5f * level);
                 if (timer.value >= interval)
                 {
                     timer.value = 0f;
@@ -196,7 +196,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("BluntForce", new System.Type[0])]
     internal class DrifterBluntForceSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.08f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
     }
 
     [SkillLevelModifier("Cleanup", typeof(Cleanup))]
@@ -259,7 +259,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("FireNanoPistol", typeof(FireNanoPistol))]
     internal class OperatorPistolSkillModifier : SimpleSkillModifier<FireNanoPistol>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.06f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
     }
 
     /// <summary>ADMIN-OVERRIDE: shorter cooldown.</summary>
@@ -362,7 +362,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier(new[] { "DroneBall", "DroneBallShootable" }, typeof(ThrowDroneBall))]
     internal class OperatorCoreSkillModifier : SimpleSkillModifier<ThrowDroneBall>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
     }
 
     #endregion
@@ -466,7 +466,7 @@ namespace SkillsPlusPlus.Modifiers
 
         public override void OnSkillEnter(EntityStates.Acolyte.Weapon.Sacrifice skillState, int level)
         {
-            skillState.soulValue += level / 2;
+            skillState.soulValue += Mathf.Min(level / 2, 2);
         }
     }
 
@@ -493,7 +493,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("EnforcerClusterGrenade", new System.Type[0])]
     internal class EnforcerClusterGrenadeSkillModifier : BaseSkillModifier
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
     }
 
     [SkillLevelModifier("EnforcerProtectAndServeActivate", typeof(ProtectAndServeActivate), typeof(ProtectAndServeDeactivate))]
@@ -559,7 +559,7 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("EnforcerTearGas", typeof(FireTearGasGrenade))]
     internal class EnforcerRipcordSkillModifier : SimpleSkillModifier<FireTearGasGrenade>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
     }
 
     [SkillLevelModifier("EnforcerCrowdControlDef", typeof(CrowdControlSlamGround))]
