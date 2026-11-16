@@ -10,7 +10,8 @@ using RoR2.Projectile;
 namespace SkillsPlusPlus.Modifiers
 {
 
-    [SkillLevelModifier("MercGroundLight", typeof(GroundLight))]
+    // "MercBodyGroundLight" is the asset name in 1.5.0; "MercGroundLight" kept for older builds.
+    [SkillLevelModifier(new[] { "MercGroundLight", "MercBodyGroundLight" }, typeof(GroundLight))]
     internal class GroundLightSkillModifier : SimpleSkillModifier<GroundLight>
     {
 

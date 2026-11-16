@@ -75,6 +75,7 @@ namespace SkillsPlusPlus
             On.RoR2.UI.LoadoutPanelController.Row.FromSkillSlot += Row_FromSkillSlot;
 
             InitConfig();
+            Director.CalmerDirector.Init(Config);
         }
 
         private static void TooltipController_SetTooltipProvider(On.RoR2.UI.TooltipController.orig_SetTooltipProvider orig, TooltipController self, TooltipProvider provider)
