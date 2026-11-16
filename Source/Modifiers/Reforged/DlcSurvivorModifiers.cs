@@ -256,10 +256,34 @@ namespace SkillsPlusPlus.Modifiers
 
     #region Operator (Drone Tech)
 
+    /// <summary>
+    /// H3-11 pistol: charges build 8% faster per level (per player, via cooldown scale), and from level 2 a fully
+    /// charged shot pierces through enemies. The bullet is fired by the owning client, so the pierce is set there.
+    /// </summary>
     [SkillLevelModifier("FireNanoPistol", typeof(FireNanoPistol))]
     internal class OperatorPistolSkillModifier : SimpleSkillModifier<FireNanoPistol>
     {
         public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.15f;
+
+        public override void SetupSkill()
+        {
+            base.SetupSkill();
+            RecalculateStatsAPI.GetStatCoefficients += (sender, args) =>
+            {
+                if (!sender || !sender.skillLocator || !sender.skillLocator.primary) return;
+                if (!string.Equals(SkillUpgrade.SkillName(sender.skillLocator.primary.skillDef), "FireNanoPistol", System.StringComparison.OrdinalIgnoreCase)) return;
+                int level = SkillUpgrade.GetLevel(sender, "FireNanoPistol");
+                if (level > 0) args.primaryCooldownMultAdd -= 1f - Mathf.Pow(0.92f, level);
+            };
+            On.EntityStates.DroneTech.Weapon.FireNanoPistol.ModifyBullet += (orig, self, bulletAttack) =>
+            {
+                orig(self, bulletAttack);
+                if (self.isCharged && SkillUpgrade.GetLevel(self.characterBody, "FireNanoPistol") >= 2)
+                {
+                    bulletAttack.stopperMask = LayerIndex.world.mask;
+                }
+            };
+        }
     }
 
     /// <summary>ADMIN-OVERRIDE: shorter cooldown.</summary>
@@ -359,10 +383,97 @@ namespace SkillsPlusPlus.Modifiers
         }
     }
 
+    /// <summary>
+    /// Ejection Core: +15% knock-up radius per level, and enemies it launches slam into the ground on landing for
+    /// 100% damage per level around them. Shootable Core: stores more of the damage shot into it, has a higher cap
+    /// and a bigger blast. Everything here runs on the host.
+    /// </summary>
     [SkillLevelModifier(new[] { "DroneBall", "DroneBallShootable" }, typeof(ThrowDroneBall))]
     internal class OperatorCoreSkillModifier : SimpleSkillModifier<ThrowDroneBall>
     {
-        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.25f;
+        private static readonly string[] Skills = { "DroneBall", "DroneBallShootable" };
+
+        public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
+
+        public override void SetupSkill()
+        {
+            base.SetupSkill();
+            On.EntityStates.DroneTech.DroneBall.ReleaseDrone.OnEnter += (orig, self) =>
+            {
+                GameObject ownerObject = self.projectileController ? self.projectileController.owner : null;
+                CharacterBody owner = ownerObject ? ownerObject.GetComponent<CharacterBody>() : null;
+                int level = owner ? SkillUpgrade.GetLevel(owner, "DroneBall") : 0;
+                float vanillaRadius = Originals.Get("Op.ReleaseDrone.stunRadius", EntityStates.DroneTech.DroneBall.ReleaseDrone.stunRadius);
+                EntityStates.DroneTech.DroneBall.ReleaseDrone.stunRadius = MultScaling(vanillaRadius, 0.15f, level);
+                try { orig(self); }
+                finally { EntityStates.DroneTech.DroneBall.ReleaseDrone.stunRadius = vanillaRadius; }
+                if (!NetworkServer.active || level <= 0 || !owner || !owner.teamComponent) return;
+
+                float radius = MultScaling(vanillaRadius, 0.15f, level);
+                HurtBox[] hurtBoxes = new SphereSearch { radius = radius, origin = self.transform.position, mask = LayerIndex.entityPrecise.mask }
+                    .RefreshCandidates().FilterCandidatesByDistinctHurtBoxEntities()
+                    .FilterCandidatesByHurtBoxTeam(TeamMask.GetEnemyTeams(owner.teamComponent.teamIndex)).GetHurtBoxes();
+                foreach (HurtBox hurtBox in hurtBoxes)
+                {
+                    CharacterBody victim = hurtBox.healthComponent ? hurtBox.healthComponent.body : null;
+                    if (!victim || victim.isFlying || !victim.characterMotor) continue;
+                    var slam = victim.gameObject.AddComponent<CoreLandingSlam>();
+                    slam.attacker = owner;
+                    slam.damageCoefficient = 1f * level;
+                }
+            };
+            ProjectileTweaks.RegisterByComponent(typeof(RoR2.Projectile.DroneBallShootableController), (projectile, owner, level) =>
+            {
+                var core = projectile.GetComponent<RoR2.Projectile.DroneBallShootableController>();
+                core.damageMultiplier *= 1f + 0.15f * level;
+                core.maxDamageCoefficient *= 1f + 0.25f * level;
+                core.maxRadius *= 1f + 0.10f * level;
+                if (core.maxDamageStored > 0f) core.maxDamageStored = owner.damage * core.maxDamageCoefficient;
+            }, "DroneBallShootable");
+        }
+    }
+
+    /// <summary>Host-side: when an enemy launched by Ejection Core lands, it slams the ground around itself.</summary>
+    internal class CoreLandingSlam : MonoBehaviour
+    {
+        private const float MinAirTime = 0.25f, MaxLifetime = 5f, Radius = 7f;
+        internal CharacterBody attacker;
+        internal float damageCoefficient;
+        private CharacterBody body;
+        private float age;
+        private bool wasAirborne;
+
+        private void Awake() { body = GetComponent<CharacterBody>(); }
+
+        private void FixedUpdate()
+        {
+            age += Time.fixedDeltaTime;
+            if (!NetworkServer.active || !body || !body.characterMotor || !attacker || age > MaxLifetime) { Destroy(this); return; }
+            bool grounded = body.characterMotor.isGrounded;
+            if (!grounded) wasAirborne = true;
+            if (!grounded || !wasAirborne || age < MinAirTime) return;
+
+            Vector3 position = body.footPosition;
+            new BlastAttack
+            {
+                attacker = attacker.gameObject,
+                inflictor = attacker.gameObject,
+                teamIndex = attacker.teamComponent ? attacker.teamComponent.teamIndex : TeamIndex.Player,
+                position = position,
+                radius = Radius,
+                baseDamage = attacker.damage * damageCoefficient,
+                baseForce = 600f,
+                crit = attacker.RollCrit(),
+                procCoefficient = 0.5f,
+                falloffModel = BlastAttack.FalloffModel.None,
+                attackerFiltering = AttackerFiltering.NeverHitSelf,
+                damageColorIndex = DamageColorIndex.Default,
+                damageType = new DamageTypeCombo(DamageType.Generic, DamageTypeExtended.Generic, DamageSource.Special),
+            }.Fire();
+            EffectManager.SpawnEffect(LegacyResourcesAPI.Load<GameObject>("Prefabs/Effects/ImpactEffects/PodGroundImpact"),
+                new EffectData { origin = position, scale = Radius }, transmit: true);
+            Destroy(this);
+        }
     }
 
     #endregion

@@ -6,6 +6,8 @@
 - Fixed original outliers: CHEF Oil Spill gasoline explosions grew +130% per level compounding (now +30% damage, +15% radius); Acrid Ravenous Bite and Engineer Spider Mines now gain a charge every 2 levels instead of every level; Loader Thunderslam +15% damage (was +5%).
 - Operator: Ascent Protocol shockwave 200% per level, ADMIN-OVERRIDE -10% cooldown, CMD-SWARM rams +20%. False Son Club slam +20% radius. Sabotage zap +20% radius.
 - New Seamstress mechanic, Threading: Trim and Flurry hits have a 5% chance per level to sew a Needle (up to her cap), feeding Clip and jump volleys.
+- Operator H3-11 pistol: charges build 8% faster per level, and from level 2 fully charged shots pierce enemies. Ejection Core: +15% knock-up radius and launched enemies slam the ground on landing (100% damage per level). Amp Core stores more damage with a higher cap and bigger blast.
+- Passive skills (loadout Misc row, e.g. Acrid Blight) no longer show an upgrade section in the tooltip.
 
 ## What's new in 0.8.2 (balance pass)
 - Damage-only upgrades give at least +10% per level: generic primaries 6% → 10%, Drifter Blunt Force 8% → 10%, Operator pistol 6% → 10%, Operator cores 12% → 15%, Enforcer Shrapnel Grenade and Ripcord 10% → 12%.

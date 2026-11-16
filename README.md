@@ -320,13 +320,13 @@ Every skill can be upgraded. Skills marked *generic* get +15-20% damage (by slot
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | H3-11 OCR Custom | +15% damage |
+| Primary | H3-11 OCR Custom | +15% damage, charges build 8% faster, from level 2 fully charged shots pierce enemies |
 | Secondary | ADMIN-OVERRIDE | -10% cooldown, +1 charge every 2 levels |
 | Secondary | CMD-SWARM | drone rams: +20% damage, +15% radius, +0.3 s shock |
 | Utility | Ascent Protocol | +15% damage, +10% leap speed, landing sends a shockwave for 200% damage |
 | Utility | FIREWALL | +20% damage, +20% shield duration |
-| Special | Ejection Core | +25% damage |
-| Special | Amp Core | +25% damage |
+| Special | Ejection Core | +20% damage, +15% knock-up radius, launched enemies slam the ground on landing for 100% damage |
+| Special | Amp Core | +20% damage, stores +15% more damage, +25% damage cap, +10% max blast radius |
 
 ### Drifter
 
