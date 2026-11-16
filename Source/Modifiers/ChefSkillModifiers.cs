@@ -149,9 +149,9 @@ namespace SkillsPlusPlus.Source.Modifiers
         //boosted add extra oil globs and 
         public static BuffDef ChefAttackSpeedBuff;
 
-        private DamageTypeCombo SearDamageTypeCombo = new DamageTypeCombo(DamageType.IgniteOnHit, DamageTypeExtended.ChefSource, DamageSource.Secondary);
+        // 1.5.0: CHEF fire is identified by AttackIdentityIndex instead of DamageTypeExtended flags
         
-        private DamageTypeCombo BoostedSearDamageTypeCombo = new DamageTypeCombo(DamageType.IgniteOnHit, DamageTypeExtended.ChefSource | DamageTypeExtended.IgniteChefOilBoosted, DamageSource.Secondary);
+        
         
         public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
         {
@@ -201,7 +201,7 @@ namespace SkillsPlusPlus.Source.Modifiers
         {
             orig(self, damageInfo);
 
-            var damagetypecheck = (damageInfo.damageType == SearDamageTypeCombo || damageInfo.damageType == BoostedSearDamageTypeCombo);
+            var damagetypecheck = damageInfo.damageType.attackIdentityIndex == AttackIdentityIndex.ChefFireDamage || damageInfo.damageType.attackIdentityIndex == AttackIdentityIndex.ChefBoostedFireDamage;
             if (!damagetypecheck) return; // no clue if this actually does anything "preformance" wise since its mostly here to prevent it from calling getcomponent every take damage ,..,,.
             
             var surv = damageInfo.attacker?.GetComponent<CharacterBody>();

@@ -1,98 +1,73 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Builds against the locally installed game and mod profile instead of NuGet game libs,
+    so we always compile against the exact game version we play (1.5.0 at time of writing).
+    Override the two paths on the command line if they differ:
+      dotnet build -p:GameDir="D:\...\Risk of Rain 2" -p:ProfileDir="C:\...\profiles\Default"
+  -->
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>Skills</AssemblyName>
     <RootNamespace>SkillsPlusPlus</RootNamespace>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <UpgradeBackupLocation>
-    </UpgradeBackupLocation>
-    <OldToolsVersion>Current</OldToolsVersion>
-    <ProjectGuid>{A41E554F-A2B3-451F-90DA-09878F5D70F8}</ProjectGuid>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Authors>CWMlolzlz</Authors>
-    <Product />
-    <Company />
-    <PackageProjectUrl>https://thunderstore.io/package/CWMlolzlz/SkillsPlusPlus/</PackageProjectUrl>
-    <RepositoryUrl>https://gitlab.com/cwmlolzlz/ror2skillsplusplus</RepositoryUrl>
-    <PackageId>Skills++</PackageId>
-    <Configurations>Debug;Release;Mulitplayer</Configurations>
-    <UserSecretsId>48d99726-acb4-4111-bdd7-282d6d2b6048</UserSecretsId>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;1591;IDE0051;CS0618</NoWarn>
     <DebugType>portable</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-    <DocumentationFile></DocumentationFile>
-    <NoWarn>1701;1702;IDE0051</NoWarn>
+    <Authors>CWMlolzlz, Volvary, icebro, damioGit</Authors>
+
+    <GameDir Condition="'$(GameDir)' == ''">I:\SteamLibrary\steamapps\common\Risk of Rain 2</GameDir>
+    <ProfileDir Condition="'$(ProfileDir)' == ''">$(APPDATA)\com.kesomannen.gale\riskofrain2\profiles\Default</ProfileDir>
+    <Managed>$(GameDir)\Risk of Rain 2_Data\Managed</Managed>
+    <BepCore>$(ProfileDir)\BepInEx\core</BepCore>
+    <Plugins>$(ProfileDir)\BepInEx\plugins</Plugins>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <NoWarn>1701;1702;IDE0051</NoWarn>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Mulitplayer|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <NoWarn>1701;1702;IDE0051</NoWarn>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Compile Remove="libs\**" />
-    <Compile Remove="PublicAPITest\**" />
-    <Compile Remove="Tests\**" />
-    <EmbeddedResource Remove="Images\**" />
-    <EmbeddedResource Remove="libs\**" />
-    <EmbeddedResource Remove="Tests\**" />
-    <None Remove="Images\**" />
-    <None Remove="libs\**" />
-    <None Remove="PublicAPITest\**" />
-    <None Remove="Tests\**" />
+    <Compile Remove="libs\**;PublicAPITest\**;Tests\**;bin\**;obj\**" />
+    <None Remove="libs\**;Tests\**;Images\**" />
   </ItemGroup>
+
   <ItemGroup>
-    <PackageReference Include="BepInEx.Analyzers" Version="1.0.8">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="BepInEx.Core" Version="5.4.21" />
-    <PackageReference Include="R2API" Version="5.0.5" />
-    <PackageReference Include="R2API.Core" Version="5.3.0" />
-    <PackageReference Include="Rune580.Mods.RiskOfRain2.RiskOfOptions" Version="2.8.3" />
-    <PackageReference Include="UnityEngine.Modules" Version="6000.3.1" IncludeAssets="compile" />
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Remove=".gitattributes" />
-    <None Remove=".gitignore" />
+    <!-- Game -->
+    <Reference Include="$(Managed)\RoR2.dll" Private="false" Publicize="true" />
+    <Reference Include="$(Managed)\HGCSharpUtils.dll" Private="false" />
+    <Reference Include="$(Managed)\HGUnityUtils.dll" Private="false" />
+    <Reference Include="$(Managed)\LegacyResourcesAPI.dll" Private="false" />
+    <Reference Include="$(Managed)\Rewired_Core.dll" Private="false" />
+    <Reference Include="$(Managed)\Rewired_CSharp.dll" Private="false" />
+    <Reference Include="$(Managed)\Unity.TextMeshPro.dll" Private="false" />
+    <Reference Include="$(Managed)\Unity.Addressables.dll" Private="false" />
+    <Reference Include="$(Managed)\Unity.ResourceManager.dll" Private="false" />
+    <Reference Include="$(Managed)\com.unity.multiplayer-hlapi.Runtime.dll" Private="false" />
+    <Reference Include="$(Managed)\Unity.Postprocessing.Runtime.dll" Private="false" />
+    <Reference Include="$(Managed)\KinematicCharacterController.dll" Private="false" />
+    <Reference Include="$(Managed)\UnityEngine*.dll" Private="false" />
+
+    <!-- BepInEx / MonoMod / Harmony -->
+    <Reference Include="$(BepCore)\BepInEx.dll" Private="false" />
+    <Reference Include="$(BepCore)\0Harmony.dll" Private="false" />
+    <Reference Include="$(BepCore)\Mono.Cecil.dll" Private="false" />
+    <Reference Include="$(BepCore)\MonoMod.RuntimeDetour.dll" Private="false" />
+    <Reference Include="$(BepCore)\MonoMod.Utils.dll" Private="false" />
+    <Reference Include="$(Plugins)\MMHOOK\MMHOOK_RoR2.dll" Private="false" />
+
+    <!-- Mod dependencies -->
+    <Reference Include="$(Plugins)\RiskofThunder-R2API_*\**\R2API.*.dll" Exclude="$(Plugins)\**\*.Interop.dll;$(Plugins)\**\R2API.Animations.Editor.dll" Private="false" />
+    <Reference Include="$(Plugins)\tristanmcpherson-R2API\R2API.Legacy\R2API.dll" Private="false" />
+    <Reference Include="$(Plugins)\Rune580-Risk_Of_Options\RiskOfOptions\RiskOfOptions.dll" Private="false" />
+    <Reference Include="$(Plugins)\pseudopulse-Rebindables\Rebindables.dll" Private="false" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Update="icon.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="icon.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="manifest.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="README.md">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\SkillsPlusPlus.language">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <None Update="icon.png;manifest.json;README.md;CHANGELOG.md;Resources\SkillsPlusPlus.language">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="ExtraSkillSlots">
-      <HintPath>libs\KingEnderBrine-ExtraSkillSlots-1.6.2\plugins\ExtraSkillSlots\ExtraSkillSlots.dll</HintPath>
-    </Reference>
-    <Reference Include="Rebindables">
-      <HintPath>libs\Rebindables.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityHotReload">
-      <HintPath>libs\UnityHotReload.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <!--Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="IF &quot;$(ConfigurationName)&quot; == &quot;Release&quot; (&#xD;&#xA;del /Q &quot;$(TargetDir)$(TargetName).zip&quot;&#xD;&#xA;)" />
-  </Target-->
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="cp &quot;$(TargetDir)$(TargetFileName)&quot; &quot;$(ProjectDir)NetworkWeaver&quot;&#xA;cp &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(ProjectDir)NetworkWeaver&quot;&#xA;&#xA;cd &quot;$(ProjectDir)NetworkWeaver&quot;&#xA;&#xA;wine Unity.UNetWeaver.exe &quot;../libs/UnityEngine.CoreModule.dll&quot; &quot;../libs/com.unity.multiplayer-hlapi.Runtime.dll&quot; &quot;Patched/&quot;  $(TargetFileName) &quot;$(ProjectDir)/libs&quot;&#xA;&#xA;mv &quot;$(TargetFileName)&quot; &quot;$(TargetFileName).prepatch&quot;&#xA;mv &quot;$(TargetName).pdb&quot; &quot;$(TargetName).pdb.prepatch&quot;&#xA;&#xA;cd ./Patched&#xA;&#xA;cp -r $(ProjectDir)NetworkWeaver/Patched $(TargetDir)Robocopy&#xA;&#xA;rm -rf $(ProjectDir)NetworkWeaver/Patched&#xA;&#xA;cp /run/media/icebrah/buh/github/ror2skillsplusplushgithub/bin/Debug/netstandard2.1/Skills.dll &quot;/run/media/icebrah/buh/gale/riskofrain2/profiles/debug2 awese/BepInEx/plugins/icebro-SkillsPlusPlus/Skills.dll&quot;&#xA;&#xA;cp /run/media/icebrah/buh/github/ror2skillsplusplushgithub/bin/Debug/netstandard2.1/Skills.pdb &quot;/run/media/icebrah/buh/gale/riskofrain2/profiles/debug2 awese/BepInEx/plugins/icebro-SkillsPlusPlus/Skills.pdb&quot;" />
-  </Target>
 </Project>
