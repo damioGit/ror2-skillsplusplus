@@ -77,7 +77,10 @@ namespace SkillsPlusPlus.Modifiers
             base.OnSkillEnter(skillState, level);
             if (skillState is ChargeIcebomb chargeBomb)
             {
-                // chargeBomb.baseDuration = MultScaling(chargeBomb.baseDuration, 0.1f, level);
+                // Charges 10% faster per level (compounding), so full-power spears come out sooner.
+                float speed = Mathf.Pow(0.90f, level);
+                chargeBomb.baseDuration *= speed;
+                chargeBomb.minChargeDuration *= speed;
             }
             if (skillState is ThrowIcebomb throwBomb)
             {

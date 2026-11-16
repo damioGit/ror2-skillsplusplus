@@ -139,7 +139,7 @@ Every skill can be upgraded. Skills marked *generic* get +15-20% damage (by slot
 | Primary | Flame Bolt | +2 stock and -10% stock recharge time |
 | Primary | Plasma Bolt | +2 stock and -10% stock recharge time |
 | Secondary | Charged Nano-Bomb | +15% damage, +5% max charge time, and +10% blast size |
-| Secondary | Cast Nano-Spear | +20% damage |
+| Secondary | Cast Nano-Spear | +20% damage, charges 10% faster |
 | Utility | Snapfreeze | +30% wall damage and +20% wall length |
 | Utility | Tectonic Blast | +15% damage, +2 shards, -12% spread, burning oiled enemies take +15% damage |
 | Utility | Quantum Transposition | dedicated upgrade from EggsSkills |
@@ -332,7 +332,7 @@ Every skill can be upgraded. Skills marked *generic* get +15-20% damage (by slot
 
 | Slot | Skill | Per level |
 |---|---|---|
-| Primary | Blunt Force | +20% damage |
+| Primary | Blunt Force | +20% damage, +25% Junk drop chance, from level 3 the third hit drops +1 Junk |
 | Secondary | Cleanup | +15% damage, +1 debris |
 | Secondary | Junk Cube | +20% damage, +5% junk drop chance |
 | Utility | Repossess | +20% damage, monsters take 25% longer to break free |
@@ -345,11 +345,11 @@ Every skill can be upgraded. Skills marked *generic* get +15-20% damage (by slot
 | Slot | Skill | Per level |
 |---|---|---|
 | Primary | Trenchbroom | +15% damage, damage falloff starts 5 m later |
-| Primary | Shrapnel Grenade | +20% damage |
+| Primary | Shrapnel Grenade | +20% damage, +15% blast radius, +1 grenade per magazine every 2 levels |
 | Secondary | Steel Protection | +20% damage, +20% deflect damage, -10% stance slow, first parry refunds 0.5 s utility cooldown |
 | Secondary | Surge Protection | +20% damage, +1 s duration, absorbs +12% max health, +15% explosion radius |
 | Utility | Shield Tackle | +20% damage, +12% charge speed |
-| Utility | Ripcord | +20% damage |
+| Utility | Ripcord | +20% damage, +20% pulling blast radius, -8% cooldown |
 | Special | Rally Point | +20% damage, +20% slam radius |
 | Special | Crash Point | +25% damage, +15% impact radius, impact slows nearby enemies |
 

@@ -193,10 +193,19 @@ namespace SkillsPlusPlus.Modifiers
 
     #region Drifter
 
-    [SkillLevelModifier("BluntForce", new System.Type[0])]
+    /// <summary>Blunt Force: +25% Junk drop chance per level; from level 3 the third hit drops an extra piece of Junk.</summary>
+    [SkillLevelModifier("BluntForce", typeof(BluntForceHit1), typeof(BluntForceHit2), typeof(BluntForceHit3))]
     internal class DrifterBluntForceSkillModifier : BaseSkillModifier
     {
         public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
+
+        public override void OnSkillEnter(BaseState skillState, int level)
+        {
+            base.OnSkillEnter(skillState, level);
+            if (!(skillState is BluntForceBase hit)) return;
+            hit.junkDropChance *= 1f + 0.25f * level;
+            if (hit is BluntForceHit3 && level >= 3) hit.ExtraJunk += 1;
+        }
     }
 
     [SkillLevelModifier("Cleanup", typeof(Cleanup))]
@@ -601,10 +610,27 @@ namespace SkillsPlusPlus.Modifiers
         }
     }
 
-    [SkillLevelModifier("EnforcerClusterGrenade", new System.Type[0])]
-    internal class EnforcerClusterGrenadeSkillModifier : BaseSkillModifier
+    /// <summary>Shrapnel Grenade: +15% blast radius per level and one more grenade in the magazine every 2 levels.</summary>
+    [SkillLevelModifier("EnforcerClusterGrenade", typeof(FireClusterGrenade))]
+    internal class EnforcerClusterGrenadeSkillModifier : SimpleSkillModifier<FireClusterGrenade>
     {
         public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
+
+        public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
+        {
+            base.OnSkillLeveledUp(level, characterBody, skillDef);
+            int vanilla = Originals.Get("Enf.Cluster.maxStock", skillDef.baseMaxStock);
+            skillDef.baseMaxStock = vanilla + level / 2;
+        }
+
+        public override void OnSkillEnter(FireClusterGrenade skillState, int level)
+        {
+            ProjectileTweaks.Register(skillState.projectilePrefab, (projectile, owner, lvl) =>
+            {
+                foreach (var explosion in projectile.GetComponents<RoR2.Projectile.ProjectileExplosion>())
+                    explosion.blastRadius *= 1f + 0.15f * lvl;
+            }, "EnforcerClusterGrenade");
+        }
     }
 
     [SkillLevelModifier("EnforcerProtectAndServeActivate", typeof(ProtectAndServeActivate), typeof(ProtectAndServeDeactivate))]
@@ -671,6 +697,28 @@ namespace SkillsPlusPlus.Modifiers
     internal class EnforcerRipcordSkillModifier : SimpleSkillModifier<FireTearGasGrenade>
     {
         public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.20f;
+
+        /// <summary>Ripcord: +20% pulling blast radius and -8% cooldown per level.</summary>
+        public override void SetupSkill()
+        {
+            base.SetupSkill();
+            RecalculateStatsAPI.GetStatCoefficients += (sender, args) =>
+            {
+                if (!sender || !sender.skillLocator || !sender.skillLocator.utility) return;
+                if (!string.Equals(SkillUpgrade.SkillName(sender.skillLocator.utility.skillDef), "EnforcerTearGas", System.StringComparison.OrdinalIgnoreCase)) return;
+                int level = SkillUpgrade.GetLevel(sender, "EnforcerTearGas");
+                if (level > 0) args.utilityCooldownMultAdd -= 1f - Mathf.Pow(0.92f, level);
+            };
+        }
+
+        public override void OnSkillEnter(FireTearGasGrenade skillState, int level)
+        {
+            ProjectileTweaks.Register(skillState.projectilePrefab, (projectile, owner, lvl) =>
+            {
+                foreach (var explosion in projectile.GetComponents<RoR2.Projectile.ProjectileExplosion>())
+                    explosion.blastRadius *= 1f + 0.20f * lvl;
+            }, "EnforcerTearGas");
+        }
     }
 
     [SkillLevelModifier("EnforcerCrowdControlDef", typeof(CrowdControlSlamGround))]
