@@ -1,5 +1,13 @@
 # Changelog
 
+## What's new in 0.7.0 (damioGit fork, RoR2 1.5.0)
+- **Real multiplayer sync.** The released builds never ran the UNet weaver, so clients only got points at stage start and buying was local. The host now owns points and levels and syncs them to everyone (R2API.Networking); clients ask the host to buy.
+- **Per-player upgrades.** Host-side effects used to read one cached player (several only ever applied to player 1, e.g. Captain DIABLO and Railgunner Supercharge/Cryocharge cooldowns). Everything now uses the acting player's own level, and shared values are only touched on the machine that controls the body.
+- **Every skill can be upgraded.** Skills without a dedicated upgrade (other mods' survivors) get damage, cooldown and extra charges per level. Damage bonuses are applied by skill slot on the host; untagged modded damage is attributed to the last skill used.
+- **New dedicated upgrades:** Seeker, False Son, Drifter, Operator, Acolyte, Enforcer (all skills), the 1.4/1.5 vanilla alts (Sabotage, Laser Cyclone, Tectonic Blast, Laser Cutter, Cloying Breath, Proliferation), Starstorm 2 Chirr / Nemesis Commando / Nemesis Mercenary, Sandswept Ranger.
+- **Calmer Director module (optional):** fewer monsters alive at once and rarer elites, without changing gold/XP.
+- Builds against the locally installed game; fixed CHEF Sear fire detection for 1.5.0; skill names match case-insensitively (fixes EggsSkills Micro Missiles).
+
 ## What's new in 0.6.1
 - Re-added configs with support for Risk of Options (sorry controller bros .., looking into how extra skill slots adds controller support!)
 - Fixed a bug where skill upgrades wouldn't stay until re-upgraded on the next stage
