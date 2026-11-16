@@ -84,10 +84,14 @@ namespace SkillsPlusPlus
         {
             orig(self, provider);
 
-            if (provider.TryGetComponent(out SkillUpgradeTooltipProvider tooltipProvider))
+            if (provider && provider.TryGetComponent(out SkillUpgradeTooltipProvider tooltipProvider))
             {
                 var tooltipController = self.EnsureComponent<SkillsPlusPlusTooltipController>();
-                tooltipController.skillUpgradeToken = tooltipProvider.GetToken();
+                tooltipController.Show(tooltipProvider.GetSkillName(), tooltipProvider.GetLevel());
+            }
+            else if (self.TryGetComponent(out SkillsPlusPlusTooltipController existing))
+            {
+                existing.Hide();
             }
         }
 
@@ -107,7 +111,7 @@ namespace SkillsPlusPlus
                 if (skillDef != null)
                 {
                     var provider = button.button.gameObject.EnsureComponent<SkillUpgradeTooltipProvider>();
-                    provider.skillName = ((ScriptableObject)skillDef)?.name;
+                    provider.skillName = SkillUpgrade.SkillName(skillDef);
                     SkillsPlusPlus.Logger.Debug(((ScriptableObject)skillDef)?.name);
                 }
             }
