@@ -85,7 +85,7 @@ namespace SkillsPlusPlus.Networking
             // The host already holds the authoritative copy.
             if (NetworkServer.active) return;
 
-            GameObject masterObject = Util.FindNetworkObject(masterId);
+            GameObject masterObject = RoR2.Util.FindNetworkObject(masterId);
             if (!masterObject || !masterObject.TryGetComponent(out SkillPointsController controller))
             {
                 Logger.Debug("SyncSkillPointsMessage: no controller for master {0}", masterId);
@@ -124,7 +124,7 @@ namespace SkillsPlusPlus.Networking
         public void OnReceived()
         {
             if (!NetworkServer.active) return;
-            GameObject masterObject = Util.FindNetworkObject(masterId);
+            GameObject masterObject = RoR2.Util.FindNetworkObject(masterId);
             if (masterObject && masterObject.TryGetComponent(out SkillPointsController controller))
             {
                 controller.ServerTryBuy(skillName);
