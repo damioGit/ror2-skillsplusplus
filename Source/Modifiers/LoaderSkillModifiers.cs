@@ -31,7 +31,6 @@ namespace SkillsPlusPlus.Modifiers
         private static float baseBlastRadius = 0f;
         private static float maxVerticalCap = 0f;
         private static Vector3 initialPosition;
-        private static SkillUpgrade slamSkill;
         public override void OnSkillEnter(BaseState skillState, int level)
         {
 
@@ -58,11 +57,6 @@ namespace SkillsPlusPlus.Modifiers
             PreGroundSlam.upwardVelocity = AdditiveScaling(baseUpwardVelocity, baseUpwardVelocity * 0.25f, level);
             GroundSlam.verticalAcceleration = AdditiveScaling(baseVerticalAcceleration, baseVerticalAcceleration * 0.25f, level);
             maxVerticalCap = AdditiveScaling(0f, 10f, level);
-
-            if (!slamSkill)
-            {
-                slamSkill = registeredSkill;
-            }
         }
 
         public static void GroundSlamFixedUpdate(On.EntityStates.Loader.GroundSlam.orig_FixedUpdate orig, EntityStates.Loader.GroundSlam self)
@@ -72,7 +66,8 @@ namespace SkillsPlusPlus.Modifiers
                 float distanceTravelled = Vector3.Distance(self.outer.commonComponents.characterBody.transform.position, initialPosition);
                 float distanceRatio = Mathf.Clamp(distanceTravelled / maxVerticalCap, 0f, 1f);
 
-                GroundSlam.blastRadius = baseBlastRadius * (slamSkill ? (1 + Mathf.Lerp(0.1f, 1f, distanceRatio) * slamSkill.skillLevel) : 1);
+                int slamLevel = SkillUpgrade.GetLevel(self.characterBody, "GroundSlam");
+                GroundSlam.blastRadius = baseBlastRadius * (1 + Mathf.Lerp(0.1f, 1f, distanceRatio) * slamLevel);
             }
             orig(self);
         }

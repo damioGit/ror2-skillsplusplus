@@ -12,6 +12,7 @@ using RoR2.Skills;
 using UnityEngine.AddressableAssets;
 using R2API;
 using GlobalEventManager = On.RoR2.GlobalEventManager;
+using UnityEngine.Networking;
 
 namespace SkillsPlusPlus.Source.Modifiers
 {
@@ -32,25 +33,15 @@ namespace SkillsPlusPlus.Source.Modifiers
     //}
     [SkillLevelModifier(new[] { "FireHandBeam", "ChargeHandBeam", "FireCorruptBeam", "ChargeCorruptHandBeam" }, typeof(FireHandBeam), typeof(ChargeHandBeam), typeof(FireCorruptHandBeam), typeof(ChargeCorruptHandBeam))]
     class VoidFiendHandBeamSkillModifier : BaseSkillModifier {
-        CharacterBody surv;
-        private int debuffTimerAdd;
+        private static readonly string[] beamSkills = { "FireHandBeam", "ChargeHandBeam", "FireCorruptBeam", "ChargeCorruptHandBeam" };
         public BuffDef VoidFiendSpeedBuff;
-        private int survlevel;
-        public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
-        {
-            base.OnSkillLeveledUp(level, characterBody, skillDef);
-            surv = characterBody;
-            survlevel = level;
-        }
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
             base.OnSkillEnter(skillState, level);
             Logger.Debug($"OnSkillEnter: {skillState.GetType().Name}");
             if(skillState is FireHandBeam beam) {
-                Logger.Debug(debuffTimerAdd);
                 beam.damageCoefficient = MultScaling(beam.damageCoefficient, 0.10f, level);
-                debuffTimerAdd = level;
                 //beam.bulletCount = MultScaling(beam.bulletCount, 1, level);
             } else if (skillState is FireCorruptHandBeam corruptbeam) {
                 corruptbeam.beamVfxPrefab.transform.localScale = new Vector3(corruptbeam.beamVfxPrefab.transform.localScale.x, corruptbeam.beamVfxPrefab.transform.localScale.y, MultScaling(1, 0.30f, level)); //vfx should extend a bit farther imo 
@@ -61,14 +52,11 @@ namespace SkillsPlusPlus.Source.Modifiers
                 Logger.Debug("firecorruptmanged " + corruptbeam.damageCoefficientPerSecond);
                 corruptbeam.damageCoefficientPerSecond = MultScaling(corruptbeam.damageCoefficientPerSecond, 0.10f, level);
                 Logger.Debug("firecorruptmanged " + corruptbeam.damageCoefficientPerSecond);
-                if (surv && VoidFiendSpeedBuff && level > 0)
+                // Buffs live on the host, which also runs this state for every Void Fiend.
+                CharacterBody body = corruptbeam.characterBody;
+                if (NetworkServer.active && body && VoidFiendSpeedBuff && level > 0 && !body.HasBuff(VoidFiendSpeedBuff))
                 {
-                    surv.AddBuff(VoidFiendSpeedBuff);
-                }
-                else
-                {
-                    Logger.Debug(surv);
-                    Logger.Debug(VoidFiendSpeedBuff);
+                    body.AddBuff(VoidFiendSpeedBuff);
                 }
             }
         }
@@ -77,9 +65,10 @@ namespace SkillsPlusPlus.Source.Modifiers
             base.OnSkillExit(skillState, level);
             if (skillState is FireCorruptHandBeam corruptbeam)
             {
-                if (surv && VoidFiendSpeedBuff)
+                CharacterBody body = corruptbeam.characterBody;
+                if (NetworkServer.active && body && VoidFiendSpeedBuff && body.HasBuff(VoidFiendSpeedBuff))
                 {
-                    surv.RemoveBuff(VoidFiendSpeedBuff);
+                    body.RemoveBuff(VoidFiendSpeedBuff);
                 }
             }
         }
@@ -96,7 +85,7 @@ namespace SkillsPlusPlus.Source.Modifiers
         {
             if (sender.HasBuff(VoidFiendSpeedBuff))
             {
-                args.baseMoveSpeedAdd += MultScaling(0.2f, 0.10f, survlevel);
+                args.baseMoveSpeedAdd += MultScaling(0.2f, 0.10f, SkillUpgrade.GetLevel(sender, beamSkills));
             }
         }
 
@@ -118,12 +107,12 @@ namespace SkillsPlusPlus.Source.Modifiers
         private void GlobalEventManagerOnOnHitEnemy(GlobalEventManager.orig_OnHitEnemy orig, RoR2.GlobalEventManager self, DamageInfo damageinfo, GameObject victim)
         {
             orig(self, damageinfo, victim);
-            if (!surv) return;
-            if (damageinfo == null) return;
+            if (damageinfo == null || !damageinfo.attacker || !victim) return;
             if (damageinfo.damageType.damageSource != DamageSource.Primary) return;
-            if (damageinfo.attacker != surv.gameObject) return;
+            if (!damageinfo.attacker.TryGetComponent(out CharacterBody attacker)) return;
+            int debuffTimerAdd = SkillUpgrade.GetLevel(attacker, "FireHandBeam", "ChargeHandBeam");
             if (debuffTimerAdd == 0) return;
-            if (surv.TryGetComponent(out VoidSurvivorController controller))
+            if (attacker.TryGetComponent(out VoidSurvivorController controller))
             {
                 if (controller.isCorrupted)
                     return;
@@ -171,16 +160,6 @@ namespace SkillsPlusPlus.Source.Modifiers
     [SkillLevelModifier("FireCorruptDisk", typeof(FireCorruptDisks))] // corrupt flood
     internal class VoidFiendFireCorruptDiskSkillModifier : SimpleSkillModifier<FireCorruptDisks>
     {
-        private CharacterBody surv;
-        public float stockamount;
-        public int skilllevel;
-
-        public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
-        {
-            base.OnSkillLeveledUp(level, characterBody, skillDef);
-            skilllevel = level;
-            surv = characterBody;
-        }
         public override void OnSkillEnter(FireCorruptDisks skillState, int level)
         {
             if (!(skillState is FireCorruptDisks fireCorruptDisks)) return;
@@ -201,16 +180,12 @@ namespace SkillsPlusPlus.Source.Modifiers
 
         private void RecalculateStatsAPIOnGetStatCoefficients(CharacterBody sender, RecalculateStatsAPI.StatHookEventArgs args)
         {
-            if (sender != surv) return;
-            Logger.Debug(sender.gameObject);
-            Logger.Debug(surv);
-            // this should technically never be null but you never know ,..
-            if (surv.TryGetComponent(out VoidSurvivorController controller))
+            int skilllevel = SkillUpgrade.GetLevel(sender, "FireCorruptDisk");
+            if (skilllevel <= 0) return;
+            if (sender.TryGetComponent(out VoidSurvivorController controller) && controller.isCorrupted)
             {
-                if (controller.isCorrupted)
-                    args.secondaryCooldownMultAdd -= 1 - MultScaling(1, -0.10f, skilllevel);
+                args.secondaryCooldownMultAdd -= 1 - MultScaling(1, -0.10f, skilllevel);
             }
-            Logger.Debug(1 - MultScaling(1, -0.10f, skilllevel));
         }
     }
 
@@ -218,19 +193,10 @@ namespace SkillsPlusPlus.Source.Modifiers
     internal class VoidFiendVoidBlinkUpSkillModifier : SimpleSkillModifier<VoidBlinkUp>
     {
         private BuffDef VoidFiendArmorBuff;
-        private CharacterBody surv;
-        private int skilllevel;
-        public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
-        {
-            base.OnSkillLeveledUp(level, characterBody, skillDef);
-            surv = characterBody;
-            skilllevel = level;
-        }
         public override void OnSkillExit(VoidBlinkUp skillState, int level)
         {
-            Logger.Debug("VoidBlinkUp");
-            if (level > 0)
-                surv.AddTimedBuff(VoidFiendArmorBuff, 3);
+            if (NetworkServer.active && level > 0 && skillState.characterBody)
+                skillState.characterBody.AddTimedBuff(VoidFiendArmorBuff, 3);
         }
         public override void SetupSkill()
         {
@@ -257,7 +223,7 @@ namespace SkillsPlusPlus.Source.Modifiers
         {
             if (sender.HasBuff(VoidFiendArmorBuff))
             {
-                args.armorAdd += AdditiveScaling(0, 50, skilllevel);
+                args.armorAdd += AdditiveScaling(0, 50, SkillUpgrade.GetLevel(sender, "VoidBlinkUp"));
             }
         }
     }
@@ -266,17 +232,10 @@ namespace SkillsPlusPlus.Source.Modifiers
     internal class VoidFiendVoidBlinkDownSkillModifier : SimpleSkillModifier<VoidBlinkDown>
     {
         private BuffDef VoidFiendDamageSpeedBuff;
-        private CharacterBody surv;
-        public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
-        {
-            base.OnSkillLeveledUp(level, characterBody, skillDef);
-            surv = characterBody;
-        }
         public override void OnSkillExit(VoidBlinkDown skillState, int level)
         {
-            Logger.Debug("VoidBlinkDown");
-            if (level > 0)
-                surv.AddTimedBuff(VoidFiendDamageSpeedBuff, level + 1);
+            if (NetworkServer.active && level > 0 && skillState.characterBody)
+                skillState.characterBody.AddTimedBuff(VoidFiendDamageSpeedBuff, level + 1);
         }
 
         public override void SetupSkill()
@@ -326,12 +285,6 @@ namespace SkillsPlusPlus.Source.Modifiers
     [SkillLevelModifier("CrushHealth", typeof(CrushHealth), typeof(ChargeCrushHealth))]
     internal class VoidFiendCrushHealthSkillModifier : BaseSkillModifier
     {
-        private CharacterBody surv;
-        public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
-        {
-            base.OnSkillLeveledUp(level, characterBody, skillDef);
-            surv = characterBody;
-        }
         public override void OnSkillEnter(BaseState skillState, int level)
         {
             if (skillState is CrushHealth crushHealth)

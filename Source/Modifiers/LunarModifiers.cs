@@ -148,15 +148,14 @@ namespace SkillsPlusPlus.Modifiers
         internal class HeartOfHeresySkillModifier : BaseSkillModifier
         {
             private static float baseDamageCoefficient = 0f;
-            private static SkillUpgrade heartSkill;
+            private static readonly string[] skillNames = { "LunarDetonatorSpecialReplacement", "Ruin" };
 
             public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
             {
                 base.OnSkillLeveledUp(level, characterBody, skillDef);
 
-                if (!heartSkill)
+                if (baseDamageCoefficient == 0f)
                 {
-                    heartSkill = registeredSkill;
                     baseDamageCoefficient = Detonate.baseDamageCoefficient;
                 }
 
@@ -172,7 +171,8 @@ namespace SkillsPlusPlus.Modifiers
             {
                 orig.Invoke((LunarDetonatorPassiveAttachment.DamageListener)self, damageReport);
 
-                float rollValue = damageReport.damageInfo.procCoefficient * (((heartSkill ? heartSkill.skillLevel : 0) * 0.20f));
+                int heartLevel = SkillUpgrade.GetLevel(damageReport.attackerBody, skillNames);
+                float rollValue = damageReport.damageInfo.procCoefficient * (heartLevel * 0.20f);
 
                 int assuredStacks = (int)Mathf.Floor(rollValue);
                 float remainder = rollValue - Mathf.Floor(rollValue);

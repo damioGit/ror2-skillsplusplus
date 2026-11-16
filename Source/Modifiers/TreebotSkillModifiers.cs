@@ -158,7 +158,6 @@ namespace SkillsPlusPlus.Modifiers
     {
         private static float baseBlastRadius = 0f;
         private static float baseDamageCoefficient = 0f;
-        private static SkillUpgrade seedSkill;
         public override void OnSkillEnter(TreebotFireFruitSeed skillState, int level)
         {
             if (skillState is TreebotFireFruitSeed)
@@ -186,19 +185,12 @@ namespace SkillsPlusPlus.Modifiers
             base.OnSkillEnter(skillState, level);
         }
 
-        public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
-        {
-            base.OnSkillLeveledUp(level, characterBody, skillDef);
-
-            if (!seedSkill)
-            {
-                seedSkill = registeredSkill;
-            }
-        }
-
         public static void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo di)
         {
-            if (seedSkill != null)
+            // Heal only the REX who hits a fruiting target, by that REX's own level (previously any attacker healed
+            // using whichever REX registered first).
+            int seedLevel = di != null && di.attacker && di.attacker.TryGetComponent(out CharacterBody attackerBody) ? SkillUpgrade.GetLevel(attackerBody, "TreebotBodyFireFruitSeed") : 0;
+            if (seedLevel > 0)
             {
                 if (di.attacker != null && self != null)
                 {
@@ -207,7 +199,7 @@ namespace SkillsPlusPlus.Modifiers
                     {
                         if (body.HasBuff(RoR2Content.Buffs.Fruiting))
                         {
-                            di.attacker.GetComponent<CharacterBody>().healthComponent.Heal(seedSkill.skillLevel * 0.01f * di.damage, default(ProcChainMask), true);
+                            di.attacker.GetComponent<CharacterBody>().healthComponent.Heal(seedLevel * 0.01f * di.damage, default(ProcChainMask), true);
                         }
                     }
                 }

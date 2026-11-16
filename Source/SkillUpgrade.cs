@@ -109,6 +109,23 @@ namespace SkillsPlusPlus
             return level;
         }
 
+        /// <summary>Highest level of the given skill among all players. For effects that can't be traced back to one player.</summary>
+        public static int GetHighestLevelAmongPlayers(params string[] skillNames)
+        {
+            int level = 0;
+            foreach (var player in PlayerCharacterMasterController.instances)
+            {
+                if (player && player.master && player.master.TryGetComponent(out SkillPointsController controller))
+                {
+                    foreach (string name in skillNames)
+                    {
+                        level = Math.Max(level, controller.GetLevel(name));
+                    }
+                }
+            }
+            return level;
+        }
+
         internal static string SkillName(SkillDef skillDef) => skillDef ? ((ScriptableObject)skillDef).name : null;
 
         private static SkillDef GetActiveSkillDef(GenericSkill genericSkill)

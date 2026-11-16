@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Networking;
 using static R2API.RecalculateStatsAPI;
 
 namespace SkillsPlusPlus.Modifiers
@@ -57,54 +58,53 @@ namespace SkillsPlusPlus.Modifiers
         }
     }
 
+
+    // All Railgunner modifiers below keep their state per body (dictionaries / sets keyed by CharacterBody) and read
+    // levels per player, instead of the single static "registered skill" they used before. Skill states run on both
+    // the owning client and the host, so scope/cryo tracking also works on the host for clients.
+
     [SkillLevelModifier("RailgunnerBodyScopeHeavy", typeof(FireSnipeHeavy))]
     internal class RailgunnerM99SkillModifier : SimpleSkillModifier<FireSnipeHeavy>
     {
-        private static int EmpoweredRoundsLeft = 0;
-        private static int MaxEmpoweredRounds = 1;
-        private static SkillUpgrade M99skill;
+        private const string SkillName = "RailgunnerBodyScopeHeavy";
+        private static readonly Dictionary<CharacterBody, int> empoweredRoundsLeft = new Dictionary<CharacterBody, int>();
 
         public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
         {
             base.OnSkillLeveledUp(level, characterBody, skillDef);
-
-            MaxEmpoweredRounds = level + 1;
             skillDef.baseMaxStock = 1 + level / 2;
-
-            if (!M99skill)
-            {
-                M99skill = registeredSkill;
-            }
         }
 
         public override void SetupSkill()
         {
-            On.EntityStates.Railgunner.Reload.Boosted.ConsumeBoost += new On.EntityStates.Railgunner.Reload.Boosted.hook_ConsumeBoost(ConsumeBoost);
-            On.EntityStates.Railgunner.Reload.BoostConfirm.OnEnter += new On.EntityStates.Railgunner.Reload.BoostConfirm.hook_OnEnter(OnEnterBoostConfirm);
-
+            On.EntityStates.Railgunner.Reload.Boosted.ConsumeBoost += ConsumeBoost;
+            On.EntityStates.Railgunner.Reload.BoostConfirm.OnEnter += OnEnterBoostConfirm;
             base.SetupSkill();
         }
 
-        public static void ConsumeBoost(On.EntityStates.Railgunner.Reload.Boosted.orig_ConsumeBoost orig, Boosted self, bool queueReload)
+        private static void ConsumeBoost(On.EntityStates.Railgunner.Reload.Boosted.orig_ConsumeBoost orig, Boosted self, bool queueReload)
         {
-            //Do not waste the empowered round if we have more left to shoot.
-            if (--EmpoweredRoundsLeft > 0)
+            CharacterBody body = self.characterBody;
+            // Do not waste the empowered round if we have more left to shoot.
+            if (body && empoweredRoundsLeft.TryGetValue(body, out int left) && --left > 0)
             {
+                empoweredRoundsLeft[body] = left;
                 RoR2.Util.PlaySound(self.boostConsumeSoundString, self.gameObject);
+                return;
             }
-            else
-            {
-                orig(self, queueReload);
-            }
+            if (body) empoweredRoundsLeft.Remove(body);
+            orig(self, queueReload);
         }
 
-        public static void OnEnterBoostConfirm(On.EntityStates.Railgunner.Reload.BoostConfirm.orig_OnEnter orig, BoostConfirm self)
+        private static void OnEnterBoostConfirm(On.EntityStates.Railgunner.Reload.BoostConfirm.orig_OnEnter orig, BoostConfirm self)
         {
-            if (M99skill)
+            CharacterBody body = self.characterBody;
+            int level = SkillUpgrade.GetLevel(body, SkillName);
+            if (body && level > 0)
             {
-                EmpoweredRoundsLeft = Math.Min(M99skill.targetGenericSkill.maxStock, MaxEmpoweredRounds);
+                int maxStock = body.skillLocator && body.skillLocator.secondary ? body.skillLocator.secondary.maxStock : 1;
+                empoweredRoundsLeft[body] = Math.Min(maxStock, level + 1);
             }
-
             orig(self);
         }
     }
@@ -112,162 +112,125 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("RailgunnerBodyScopeLight", typeof(FireSnipeLight), typeof(WindUpScopeLight), typeof(WindDownScopeLight))]
     internal class RailgunnerHH44SkillModifier : BaseSkillModifier
     {
+        private const string SkillName = "RailgunnerBodyScopeLight";
+        private const float SpreeTimerGrace = 2f;
+
         private static BuffDef KillingSpreeBuff;
         private static BuffDef StrategicRetreatBuff;
-        private static SkillUpgrade HH44Skill;
-        private static bool bScopeActive;
-        private static float KillingSpreeTimer = 0;
-        private static float SpreeTimerGrace = 2f;
+        private static readonly HashSet<CharacterBody> scopedBodies = new HashSet<CharacterBody>();
+        private static readonly Dictionary<CharacterBody, float> spreeTimers = new Dictionary<CharacterBody, float>();
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
-            if (skillState is FireSnipeLight)
+            CharacterBody body = skillState.outer.commonComponents.characterBody;
+            if (skillState is WindUpScopeLight)
             {
-                this.OnFireSnipeLightEnter((FireSnipeLight)skillState, level);
-            }
-            else if (skillState is WindUpScopeLight)
-            {
-                this.OnWindUpScopeLightEnter((WindUpScopeLight)skillState, level);
+                if (body) scopedBodies.Add(body);
             }
             else if (skillState is WindDownScopeLight)
             {
-                this.OnWindDownScopeLightEnter((WindDownScopeLight)skillState, level);
+                if (body) scopedBodies.Remove(body);
+                OnWindDownScopeLightEnter(body, level);
             }
-
             base.OnSkillEnter(skillState, level);
         }
 
-        public void OnFireSnipeLightEnter(FireSnipeLight skillState, int level)
+        private static void OnWindDownScopeLightEnter(CharacterBody body, int level)
         {
-        }
+            // Buffs only live on the host; the host runs this state for every Railgunner.
+            if (!NetworkServer.active || !body || !body.HasBuff(KillingSpreeBuff)) return;
 
-        public void OnWindUpScopeLightEnter(WindUpScopeLight skillState, int level)
-        {
-            bScopeActive = true;
-        }
+            int killingSpree = body.GetBuffCount(KillingSpreeBuff);
+            body.SetBuffCount(KillingSpreeBuff.buffIndex, 0);
+            spreeTimers.Remove(body);
 
-        public void OnWindDownScopeLightEnter(WindDownScopeLight skillState, int level)
-        {
-            bScopeActive = false;
-
-            if (skillState.outer.commonComponents.characterBody.HasBuff(KillingSpreeBuff))
+            float retreatDuration = 0.25f * level * killingSpree;
+            foreach (CharacterBody.TimedBuff buff in body.timedBuffs)
             {
-                int KSBuffCount = skillState.outer.commonComponents.characterBody.GetBuffCount(KillingSpreeBuff);
-                skillState.outer.commonComponents.characterBody.SetBuffCount(KillingSpreeBuff.buffIndex, 0);
-
-                float SRDuration = 0.25f * level * KSBuffCount;
-
-                foreach (CharacterBody.TimedBuff buff in skillState.outer.commonComponents.characterBody.timedBuffs)
+                if (buff.buffIndex == StrategicRetreatBuff.buffIndex)
                 {
-                    if (buff.buffIndex == StrategicRetreatBuff.buffIndex)
-                    {
-                        buff.timer += SRDuration;
-                        return;
-                    }
+                    buff.timer += retreatDuration;
+                    return;
                 }
-                skillState.outer.commonComponents.characterBody.AddTimedBuff(StrategicRetreatBuff, SRDuration);
             }
+            body.AddTimedBuff(StrategicRetreatBuff, retreatDuration);
         }
 
-        public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
-        {
-            base.OnSkillLeveledUp(level, characterBody, skillDef);
-
-            if (!HH44Skill)
-            {
-                HH44Skill = registeredSkill;
-            }
-        }
-
-        public void RegisterKillingBuffs()
+        private void RegisterKillingBuffs()
         {
             {
                 BuffDef buffDef = ScriptableObject.CreateInstance<BuffDef>();
-
                 buffDef.buffColor = new Color(0.78f, 0.20f, 0.78f);
                 buffDef.canStack = true;
                 buffDef.eliteDef = null;
                 buffDef.iconSprite = Addressables.LoadAssetAsync<BuffDef>("RoR2/Base/CritOnUse/bdFullCrit.asset").WaitForCompletion().iconSprite;
                 buffDef.isDebuff = true;
                 buffDef.name = "RailgunnerKillingSpreeBuff";
-
                 KillingSpreeBuff = buffDef;
                 ContentAddition.AddBuffDef(buffDef);
             }
-
             {
                 BuffDef buffDef = ScriptableObject.CreateInstance<BuffDef>();
-
                 buffDef.buffColor = new Color(0.74f, 0.36f, 0.23f);
                 buffDef.canStack = false;
                 buffDef.eliteDef = null;
                 buffDef.iconSprite = Addressables.LoadAssetAsync<BuffDef>("RoR2/DLC1/MoveSpeedOnKill/bdKillMoveSpeed.asset").WaitForCompletion().iconSprite;
                 buffDef.isDebuff = true;
                 buffDef.name = "RailgunnerStrategicRetreatBuff";
-
                 StrategicRetreatBuff = buffDef;
                 ContentAddition.AddBuffDef(buffDef);
             }
         }
 
-        public void GlobalEventManager_OnCharacterDeath(On.RoR2.GlobalEventManager.orig_OnCharacterDeath orig, RoR2.GlobalEventManager self, RoR2.DamageReport damageReport)
+        private static void GlobalEventManager_OnCharacterDeath(On.RoR2.GlobalEventManager.orig_OnCharacterDeath orig, RoR2.GlobalEventManager self, RoR2.DamageReport damageReport)
         {
-            if (bScopeActive && damageReport.attackerBody == HH44Skill.targetGenericSkill.characterBody && HH44Skill.skillLevel > 0)
+            CharacterBody attacker = damageReport?.attackerBody;
+            if (attacker && scopedBodies.Contains(attacker) && SkillUpgrade.GetLevel(attacker, SkillName) > 0)
             {
-                damageReport.attackerBody.AddBuff(KillingSpreeBuff);
-                KillingSpreeTimer = SpreeTimerGrace;
+                attacker.AddBuff(KillingSpreeBuff);
+                spreeTimers[attacker] = SpreeTimerGrace;
             }
-
             orig(self, damageReport);
         }
 
-        public void CharacterBody_Update(On.RoR2.CharacterBody.orig_Update orig, RoR2.CharacterBody self)
+        private static void CharacterBody_FixedUpdate(On.RoR2.CharacterBody.orig_FixedUpdate orig, RoR2.CharacterBody self)
         {
-            if (HH44Skill && self == HH44Skill.targetGenericSkill.characterBody && self.HasBuff(KillingSpreeBuff))
-            {
-                KillingSpreeTimer -= Time.deltaTime;
-
-                if (KillingSpreeTimer < 0f)
-                {
-                    KillingSpreeTimer += SpreeTimerGrace;
-                    if (self.GetBuffCount(KillingSpreeBuff) > 1)
-                    {
-                        self.SetBuffCount(KillingSpreeBuff.buffIndex, self.GetBuffCount(KillingSpreeBuff) - 1);
-                    }
-                    else
-                    {
-                        self.RemoveBuff(KillingSpreeBuff);
-                    }
-                }
-            }
-
             orig(self);
-        }
-
-        public static void RecalculateStats(CharacterBody sender, StatHookEventArgs args)
-        {
-            if (!sender)
+            if (!NetworkServer.active || !self || !spreeTimers.TryGetValue(self, out float timer)) return;
+            if (!self.HasBuff(KillingSpreeBuff))
             {
+                spreeTimers.Remove(self);
                 return;
             }
+            timer -= Time.fixedDeltaTime;
+            if (timer < 0f)
+            {
+                timer += SpreeTimerGrace;
+                int count = self.GetBuffCount(KillingSpreeBuff);
+                self.SetBuffCount(KillingSpreeBuff.buffIndex, Math.Max(0, count - 1));
+            }
+            spreeTimers[self] = timer;
+        }
+
+        private static void RecalculateStats(CharacterBody sender, StatHookEventArgs args)
+        {
+            if (!sender) return;
             if (sender.HasBuff(StrategicRetreatBuff))
             {
                 args.baseMoveSpeedAdd += 3f;
             }
             if (sender.HasBuff(KillingSpreeBuff))
             {
-                args.armorAdd += (sender.GetBuffCount(KillingSpreeBuff) * HH44Skill.skillLevel);
+                args.armorAdd += sender.GetBuffCount(KillingSpreeBuff) * SkillUpgrade.GetLevel(sender, SkillName);
             }
         }
 
         public override void SetupSkill()
         {
             RegisterKillingBuffs();
-
             On.RoR2.GlobalEventManager.OnCharacterDeath += GlobalEventManager_OnCharacterDeath;
-            On.RoR2.CharacterBody.Update += CharacterBody_Update;
+            On.RoR2.CharacterBody.FixedUpdate += CharacterBody_FixedUpdate;
             GetStatCoefficients += RecalculateStats;
-
             base.SetupSkill();
         }
     }
@@ -275,10 +238,12 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("RailgunnerBodyFireMineConcussive", typeof(FireMineConcussive))]
     internal class RailgunnerConcussiveMineSkillModifier : SimpleSkillModifier<FireMineConcussive>
     {
+        private const string SkillName = "RailgunnerBodyFireMineConcussive";
         private static BuffDef FeatherFallBuff;
         private static int ConcussiveProjectileCatalogIndex = -1337;
         private static float baseThrowForce = 0;
-        private static SkillUpgrade ConcussiveMineSkill;
+        // Level of the Railgunner whose mine launched each body, so the fall speed cap matches that player.
+        private static readonly Dictionary<CharacterBody, int> featherFallLevel = new Dictionary<CharacterBody, int>();
 
         public override void OnSkillEnter(FireMineConcussive skillState, int level)
         {
@@ -288,83 +253,66 @@ namespace SkillsPlusPlus.Modifiers
                 {
                     ConcussiveProjectileCatalogIndex = projectileController.catalogIndex;
                 }
-
                 if (skillState.projectilePrefab.TryGetComponent(out ProjectileSimple projectileSimple))
                 {
                     baseThrowForce = projectileSimple.desiredForwardSpeed;
                 }
             }
-
             if (skillState.projectilePrefab.TryGetComponent(out ProjectileSimple projectile))
             {
                 projectile.desiredForwardSpeed = MultScaling(baseThrowForce, 0.15f, level);
             }
-
             base.OnSkillEnter(skillState, level);
-        }
-        public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
-        {
-            base.OnSkillLeveledUp(level, characterBody, skillDef);
-
-            if (!ConcussiveMineSkill)
-            {
-                ConcussiveMineSkill = registeredSkill;
-            }
         }
 
         public override void SetupSkill()
         {
             RegisterFeatherFallBuff();
-
-            On.RoR2.HealthComponent.TakeDamage += new On.RoR2.HealthComponent.hook_TakeDamage(RailgunnerConcussiveMineSkillModifier.HealthComponent_TakeDamage);
-            On.RoR2.CharacterBody.FixedUpdate += new On.RoR2.CharacterBody.hook_FixedUpdate(RailgunnerConcussiveMineSkillModifier.CharacterBody_FixedUpdate);
-
+            On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
+            On.RoR2.CharacterBody.FixedUpdate += CharacterBody_FixedUpdate;
             base.SetupSkill();
         }
 
-        public void RegisterFeatherFallBuff()
+        private void RegisterFeatherFallBuff()
         {
             BuffDef buffDef = ScriptableObject.CreateInstance<BuffDef>();
-
             buffDef.buffColor = new Color(1f, 0.8f, 0.55f);
             buffDef.canStack = false;
             buffDef.eliteDef = null;
             buffDef.iconSprite = Addressables.LoadAssetAsync<BuffDef>("RoR2/Base/Bandit2/bdCloakSpeed.asset").WaitForCompletion().iconSprite;
-
             buffDef.isDebuff = false;
             buffDef.name = "RailgunnerFeatherFallBuff";
-
             FeatherFallBuff = buffDef;
             ContentAddition.AddBuffDef(buffDef);
         }
 
-        public static void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo di)
+        private static void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo di)
         {
-            if (di.inflictor && di.inflictor.TryGetComponent(out ProjectileController controller) && controller.catalogIndex == ConcussiveProjectileCatalogIndex)
+            if (self && self.body && di != null && di.inflictor && di.inflictor.TryGetComponent(out ProjectileController controller) && controller.catalogIndex == ConcussiveProjectileCatalogIndex)
             {
-                if (ConcussiveMineSkill.skillLevel != 0)
+                CharacterBody attacker = di.attacker ? di.attacker.GetComponent<CharacterBody>() : null;
+                int level = SkillUpgrade.GetLevel(attacker, SkillName);
+                if (level > 0)
                 {
-                    self.body.AddTimedBuff(FeatherFallBuff, 1.0f + (0.5f * ConcussiveMineSkill.skillLevel));
-                    if (self.body != ConcussiveMineSkill.targetGenericSkill.characterBody)
+                    featherFallLevel[self.body] = level;
+                    self.body.AddTimedBuff(FeatherFallBuff, 1.0f + (0.5f * level));
+                    if (self.body != attacker)
                     {
-                        self?.body?.characterMotor?.AddDisplacement(new Vector3(0f, 5f, 0f));
+                        self.body.characterMotor?.AddDisplacement(new Vector3(0f, 5f, 0f));
                     }
                 }
             }
-
-            orig.Invoke(self, di);
+            orig(self, di);
         }
 
-        public static void CharacterBody_FixedUpdate(On.RoR2.CharacterBody.orig_FixedUpdate orig, CharacterBody self)
+        private static void CharacterBody_FixedUpdate(On.RoR2.CharacterBody.orig_FixedUpdate orig, CharacterBody self)
         {
-            if (self && self.HasBuff(FeatherFallBuff) && !self.characterMotor.isGrounded)
+            if (self && self.characterMotor && self.HasBuff(FeatherFallBuff) && !self.characterMotor.isGrounded)
             {
-                float upVelocity = self.characterMotor.velocity.y;
-
-                upVelocity = Mathf.Max(upVelocity, -30f * (3.5f / (ConcussiveMineSkill.skillLevel + 3.5f)));
+                int level = featherFallLevel.TryGetValue(self, out int stored) ? stored : 1;
+                float upVelocity = Mathf.Max(self.characterMotor.velocity.y, -30f * (3.5f / (level + 3.5f)));
                 self.characterMotor.velocity = new Vector3(self.characterMotor.velocity.x, upVelocity, self.characterMotor.velocity.z);
             }
-
             orig(self);
         }
     }
@@ -372,112 +320,90 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("RailgunnerBodyFireMineBlinding", typeof(FireMineBlinding))]
     internal class RailgunnerPolarFieldMineSkillModifier : SimpleSkillModifier<FireMineBlinding>
     {
+        private const string SkillName = "RailgunnerBodyFireMineBlinding";
         private static BuffDef TimePressureDebuff;
         private static int PolarProjectileCatalogIndex = -1337;
         private static float baseThrowForce = 0;
-        private static SkillUpgrade PolarMineSkill;
         private static float baseRadius = 0;
-        private static List<BuffWard> Wards = new List<BuffWard>();
+        private static readonly List<BuffWard> Wards = new List<BuffWard>();
 
         public override void OnSkillEnter(FireMineBlinding skillState, int level)
         {
             FirstTimeSetup(skillState);
-
             if (skillState.projectilePrefab.TryGetComponent(out ProjectileSimple projectile))
             {
                 projectile.desiredForwardSpeed = MultScaling(baseThrowForce, 0.15f, level);
             }
-
             base.OnSkillEnter(skillState, level);
         }
 
         private static void FirstTimeSetup(FireMineBlinding skillState)
         {
-            if (PolarProjectileCatalogIndex == -1337)
+            if (PolarProjectileCatalogIndex != -1337) return;
+
+            if (skillState.projectilePrefab.TryGetComponent(out ProjectileExplosion projectileExplosion)
+                && projectileExplosion.childrenProjectilePrefab.TryGetComponent(out BuffWard buffWard))
             {
-                if (skillState.projectilePrefab.TryGetComponent(out ProjectileExplosion projectileExplosion))
+                baseRadius = buffWard.radius;
+                BuffWard copy = (BuffWard)projectileExplosion.childrenProjectilePrefab.AddComponent(buffWard.GetType());
+                Wards.Add(buffWard);
+                Wards.Add(copy);
+                foreach (System.Reflection.FieldInfo field in buffWard.GetType().GetFields())
                 {
-                    if (projectileExplosion.childrenProjectilePrefab.TryGetComponent(out BuffWard buffWard))
-                    {
-                        baseRadius = buffWard.radius;
-
-                        BuffWard copy = (BuffWard)(projectileExplosion.childrenProjectilePrefab.AddComponent(buffWard.GetType()));
-
-                        Wards.Add(buffWard);
-                        Wards.Add(copy);
-
-                        System.Reflection.FieldInfo[] fields = buffWard.GetType().GetFields();
-                        foreach (System.Reflection.FieldInfo field in fields)
-                        {
-                            field.SetValue(copy, field.GetValue(buffWard));
-                        }
-                    }
+                    field.SetValue(copy, field.GetValue(buffWard));
                 }
-
-                if (skillState.projectilePrefab.TryGetComponent(out ProjectileController projectileController))
-                {
-                    PolarProjectileCatalogIndex = projectileController.catalogIndex;
-                }
-                if (skillState.projectilePrefab.TryGetComponent(out ProjectileSimple projectileSimple))
-                {
-                    baseThrowForce = projectileSimple.desiredForwardSpeed;
-                }
+            }
+            if (skillState.projectilePrefab.TryGetComponent(out ProjectileController projectileController))
+            {
+                PolarProjectileCatalogIndex = projectileController.catalogIndex;
+            }
+            if (skillState.projectilePrefab.TryGetComponent(out ProjectileSimple projectileSimple))
+            {
+                baseThrowForce = projectileSimple.desiredForwardSpeed;
             }
         }
 
         public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
         {
             base.OnSkillLeveledUp(level, characterBody, skillDef);
-
-            if (!PolarMineSkill)
-            {
-                PolarMineSkill = registeredSkill;
-            }
-
-            bool bCheckedForOriginal = false;
+            bool isCopy = false;
             foreach (BuffWard ward in Wards)
             {
                 ward.radius = MultScaling(baseRadius, 0.15f, level);
-                if (PolarMineSkill.skillLevel > 0 && bCheckedForOriginal)
+                if (isCopy && level > 0)
                 {
                     ward.buffDef = TimePressureDebuff;
                 }
-                else
-                {
-                    bCheckedForOriginal = true;
-                }
+                isCopy = true;
             }
         }
 
         public override void SetupSkill()
         {
             RegisterTimePressureDebuff();
-
-            On.RoR2.HealthComponent.TakeDamage += new On.RoR2.HealthComponent.hook_TakeDamage(HealthComponent_TakeDamage);
-
+            On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             base.SetupSkill();
         }
 
-        public static void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo di)
+        private static void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo di)
         {
-            if (self.body.HasBuff(TimePressureDebuff))
+            if (self && self.body && di != null && self.body.HasBuff(TimePressureDebuff))
             {
-                di.damage = MultScaling(di.damage, 0.1f, PolarMineSkill.skillLevel);
+                // The ward can't tell us which Railgunner placed it, so use the strongest one in the party.
+                di.damage = MultScaling(di.damage, 0.1f, SkillUpgrade.GetHighestLevelAmongPlayers(SkillName));
             }
             orig(self, di);
         }
 
-        public void RegisterTimePressureDebuff()
+        private void RegisterTimePressureDebuff()
         {
             BuffDef buffDef = ScriptableObject.CreateInstance<BuffDef>();
-
             buffDef.buffColor = new Color(0.5f, 0.6f, 1f);
             buffDef.canStack = false;
             buffDef.eliteDef = null;
             buffDef.iconSprite = Addressables.LoadAssetAsync<BuffDef>("RoR2/Base/Grandparent/bdOverheat.asset").WaitForCompletion().iconSprite;
             buffDef.isDebuff = true;
             buffDef.name = "RailgunnerTimePressureBuff";
-
             TimePressureDebuff = buffDef;
             ContentAddition.AddBuffDef(buffDef);
         }
@@ -486,11 +412,9 @@ namespace SkillsPlusPlus.Modifiers
     [SkillLevelModifier("RailgunnerBodyChargeSnipeSuper", typeof(FireSnipeSuper))]
     internal class RailgunnerSuperchargeSkillModifier : SimpleSkillModifier<FireSnipeSuper>
     {
+        private const string SkillName = "RailgunnerBodyChargeSnipeSuper";
         private static float originalProcRate = 0f;
         private static float originalCritMult = 0f;
-        private static SkillUpgrade superchargeSkill;
-
-        private static float originalRechargeRate;
 
         public override void OnSkillEnter(FireSnipeSuper skillState, int level)
         {
@@ -499,167 +423,109 @@ namespace SkillsPlusPlus.Modifiers
                 originalProcRate = skillState.procCoefficient;
                 originalCritMult = skillState.critDamageMultiplier;
             }
-
             if (level > 0)
             {
                 skillState.procCoefficient = MultScaling(originalProcRate, 0.1f, level);
                 skillState.critDamageMultiplier = MultScaling(originalCritMult, 0.2f, level);
             }
-
             base.OnSkillEnter(skillState, level);
-        }
-        public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
-        {
-            base.OnSkillLeveledUp(level, characterBody, skillDef);
-
-            if (!superchargeSkill)
-            {
-                superchargeSkill = registeredSkill;
-            }
-
-            originalRechargeRate = 1 - (5f / (level + 5f));
-            Logger.Debug(originalRechargeRate);
         }
 
         public override void SetupSkill()
         {
             GetStatCoefficients += RecalculateStats;
-
             base.SetupSkill();
         }
 
-        private void RecalculateStats(CharacterBody sender, StatHookEventArgs args)
+        // Previously only ever applied to player 1.
+        private static void RecalculateStats(CharacterBody sender, StatHookEventArgs args)
         {
-            if (!sender || !superchargeSkill)
-            {
-                return;
-            }
-
-            if (sender == PlayerCharacterMasterController.instances[0].master.GetBody())
-            {
-                args.utilityCooldownMultAdd -= 1 - (20f / (superchargeSkill.skillLevel + 20f));
-                args.specialCooldownMultAdd -= originalRechargeRate;
-            }
+            int level = SkillUpgrade.GetLevel(sender, SkillName);
+            if (level <= 0) return;
+            args.utilityCooldownMultAdd -= 1 - (20f / (level + 20f));
+            args.specialCooldownMultAdd -= 1 - (5f / (level + 5f));
         }
     }
 
     [SkillLevelModifier("RailgunnerBodyChargeSnipeCryo", typeof(FireSnipeCryo), typeof(ExpiredCryo), typeof(ChargedCryo))]
     internal class RailgunnerCryochargeSkillModifier : BaseSkillModifier
     {
+        private const string SkillName = "RailgunnerBodyChargeSnipeCryo";
         private static BuffDef FrostfireBuff;
-        private static DotController.DotDef FrostfireDot;
         private static DotController.DotIndex FrostfireIndex;
-        private static SkillUpgrade CryochargeSkill;
-        private static bool bCryoActive = false;
-        private static float originalRechargeRate = 0;
+        private static readonly HashSet<CharacterBody> cryoActiveBodies = new HashSet<CharacterBody>();
 
         public override void OnSkillEnter(BaseState skillState, int level)
         {
             base.OnSkillEnter(skillState, level);
-
             if (skillState is ChargedCryo)
             {
-                this.OnChargedCryo((ChargedCryo)skillState, level);
+                CharacterBody body = skillState.outer.commonComponents.characterBody;
+                if (body) cryoActiveBodies.Add(body);
             }
         }
 
         public override void OnSkillExit(BaseState skillState, int level)
         {
             base.OnSkillExit(skillState, level);
-            if (skillState is FireSnipeCryo)
+            if (skillState is FireSnipeCryo || skillState is ExpiredCryo)
             {
-                this.OnFireSnipeCryo((FireSnipeCryo)skillState, level);
-            }
-            else if (skillState is ExpiredCryo)
-            {
-                this.OnExpiredCryo((ExpiredCryo)skillState, level);
+                CharacterBody body = skillState.outer.commonComponents.characterBody;
+                if (body) cryoActiveBodies.Remove(body);
             }
         }
 
-        public void OnFireSnipeCryo(FireSnipeCryo skillstate, int level)
-        {
-            bCryoActive = false;
-        }
-
-        public void OnExpiredCryo(ExpiredCryo skillstate, int level)
-        {
-            bCryoActive = false;
-        }
-
-        public void OnChargedCryo(ChargedCryo skillstate, int level)
-        {
-            bCryoActive = true;
-        }
-
-        public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
-        {
-            base.OnSkillLeveledUp(level, characterBody, skillDef);
-
-            if (!CryochargeSkill)
-            {
-                CryochargeSkill = registeredSkill;
-            }
-            originalRechargeRate = 1 - (10f / (level + 10f));
-            Logger.Debug(originalRechargeRate);
-        }
-
-        public void RegisterFrostfireBuff()
+        private void RegisterFrostfireBuff()
         {
             BuffDef buffDef = ScriptableObject.CreateInstance<BuffDef>();
-
             buffDef.buffColor = new Color(0.5f, 0.5f, 1f);
             buffDef.canStack = false;
             buffDef.eliteDef = null;
             buffDef.iconSprite = Addressables.LoadAssetAsync<BuffDef>("RoR2/DLC1/StrengthenBurn/bdStrongerBurn.asset").WaitForCompletion().iconSprite;
             buffDef.isDebuff = true;
             buffDef.name = "RailgunnerFrostfireBuff";
-
             FrostfireBuff = buffDef;
             ContentAddition.AddBuffDef(buffDef);
 
             DotController.DotDef dotDef = new DotController.DotDef();
-
             dotDef.associatedBuff = FrostfireBuff;
             dotDef.damageCoefficient = 2f;
             dotDef.damageColorIndex = DamageColorIndex.Item;
             dotDef.terminalTimedBuff = FrostfireBuff;
             dotDef.interval = 0.5f;
-
-            FrostfireDot = dotDef;
             FrostfireIndex = DotAPI.RegisterDotDef(dotDef);
         }
 
-        public static void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo di)
+        private static void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo di)
         {
-            if (bCryoActive && di.inflictor && di.inflictor.TryGetComponent(out CharacterBody body) && body == CryochargeSkill.targetGenericSkill.characterBody)
+            if (self && self.body && di != null && di.inflictor && di.inflictor.TryGetComponent(out CharacterBody body) && cryoActiveBodies.Contains(body))
             {
-                if (CryochargeSkill.skillLevel > 0)
+                int level = SkillUpgrade.GetLevel(body, SkillName);
+                if (level > 0)
                 {
-                    self.body.AddTimedBuff(FrostfireBuff, 2f * CryochargeSkill.skillLevel);
-                    int ignitionTanks = body.inventory.GetItemCount(DLC1Content.Items.StrengthenBurn);
-                    DotController.InflictDot(self.gameObject, di.attacker, FrostfireIndex, 2f * CryochargeSkill.skillLevel, (1 + 3 * ignitionTanks), 1);
+                    self.body.AddTimedBuff(FrostfireBuff, 2f * level);
+                    int ignitionTanks = body.inventory ? body.inventory.GetItemCount(DLC1Content.Items.StrengthenBurn) : 0;
+                    DotController.InflictDot(self.gameObject, di.attacker, FrostfireIndex, 2f * level, (1 + 3 * ignitionTanks), 1);
                 }
             }
-
-            orig.Invoke(self, di);
+            orig(self, di);
         }
 
         public override void SetupSkill()
         {
             RegisterFrostfireBuff();
-
-            On.RoR2.HealthComponent.TakeDamage += new On.RoR2.HealthComponent.hook_TakeDamage(HealthComponent_TakeDamage);
-
-            base.SetupSkill();
-
+            On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPIOnGetStatCoefficients;
+            base.SetupSkill();
         }
 
-        private void RecalculateStatsAPIOnGetStatCoefficients(CharacterBody sender, StatHookEventArgs args)
+        // Previously only ever applied to player 1.
+        private static void RecalculateStatsAPIOnGetStatCoefficients(CharacterBody sender, StatHookEventArgs args)
         {
-            if (sender == PlayerCharacterMasterController.instances[0].master.GetBody())
+            int level = SkillUpgrade.GetLevel(sender, SkillName);
+            if (level > 0)
             {
-                args.specialCooldownMultAdd -= originalRechargeRate;
+                args.specialCooldownMultAdd -= 1 - (10f / (level + 10f));
             }
         }
     }

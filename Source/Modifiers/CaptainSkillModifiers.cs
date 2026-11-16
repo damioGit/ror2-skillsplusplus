@@ -80,16 +80,9 @@ namespace SkillsPlusPlus.Modifiers
     {
         private static int diabloStrikeProjectileCatalogIndex = -1337;
         private static float fuseDuration;
-        private static SkillUpgrade diabloSkill;
-
         public override void OnSkillLeveledUp(int level, CharacterBody characterBody, SkillDef skillDef)
         {
             base.OnSkillLeveledUp(level, characterBody, skillDef);
-
-            if (!diabloSkill)
-            {
-                diabloSkill = registeredSkill;
-            }
 
             fuseDuration = Mathf.Clamp(20f - (level), 0f, 20f);
         }
@@ -150,14 +143,11 @@ namespace SkillsPlusPlus.Modifiers
 
         private void RecalculateStats(CharacterBody sender, StatHookEventArgs args)
         {
-            if (!sender || !diabloSkill)
+            // Previously this only ever applied to player 1. Now every Captain gets their own reduction.
+            int level = SkillUpgrade.GetLevel(sender, "PrepAirstrikeAlt");
+            if (level > 0)
             {
-                return;
-            }
-
-            if (sender == PlayerCharacterMasterController.instances[0].master.GetBody())
-            {
-                args.utilityCooldownMultAdd -= 1 - (5f / (diabloSkill.skillLevel + 5f));
+                args.utilityCooldownMultAdd -= 1 - (5f / (level + 5f));
             }
         }
 
@@ -165,16 +155,16 @@ namespace SkillsPlusPlus.Modifiers
         {
             orig(self, ref fireProjectileInfo);
 
-            if (self is CallAirstrikeAlt && diabloSkill != null)
+            int level = self is CallAirstrikeAlt ? SkillUpgrade.GetLevel(self.characterBody, "PrepAirstrikeAlt") : 0;
+            if (level > 0)
             {
                 fireProjectileInfo.useFuseOverride = true;
-                fireProjectileInfo.fuseOverride = fuseDuration;
+                fireProjectileInfo.fuseOverride = Mathf.Clamp(20f - level, 0f, 20f);
             }
         }
 
         public static void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo di)
         {
-            if (diabloSkill != null)
             {
                 if (di != null && self != null)
                 {
@@ -187,12 +177,13 @@ namespace SkillsPlusPlus.Modifiers
                     {
                         if (di.attacker && di.attacker.TryGetComponent(out CharacterBody attackerBody))
                         {
-                            if (self?.body?.teamComponent?.teamIndex == attackerBody?.teamComponent?.teamIndex && diabloSkill.skillLevel > 0)
+                            int diabloLevel = SkillUpgrade.GetLevel(attackerBody, "PrepAirstrikeAlt");
+                            if (self?.body?.teamComponent?.teamIndex == attackerBody?.teamComponent?.teamIndex && diabloLevel > 0)
                             {
-                                var friendlyFireProtection = (25 / ((float)diabloSkill.skillLevel + 25));
+                                var friendlyFireProtection = (25 / ((float)diabloLevel + 25));
                                 if (self.combinedHealthFraction > friendlyFireProtection)
                                 {
-                                    di.damage = (self.combinedHealth - (diabloSkill.skillLevel * 0.04f * self.fullCombinedHealth)) * 2;    //Friendly fire deals half damage
+                                    di.damage = (self.combinedHealth - (diabloLevel * 0.04f * self.fullCombinedHealth)) * 2;    //Friendly fire deals half damage
                                     di.damageType |= DamageType.BypassArmor;
                                     di.damageType &= ~DamageType.AOE;
                                 }
