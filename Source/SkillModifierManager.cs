@@ -90,6 +90,30 @@ namespace SkillsPlusPlus
             }
         }
 
+        /// <summary>
+        /// Registers a modifier from code instead of an attribute. Used for skills from other mods, whose entity state
+        /// types are resolved by name at runtime so Skills++ has no hard dependency on those mods.
+        /// </summary>
+        internal static void RegisterModifier(BaseSkillModifier modifier, string[] skillNames, Type[] stateTypes)
+        {
+            modifier.skillNames = skillNames;
+            modifier.EntityStateTypes = stateTypes;
+            foreach (string skillName in skillNames)
+            {
+                if (skillNameToModifierMap.ContainsKey(skillName))
+                {
+                    Logger.Warn("Skill modifier conflict for {0}, keeping the existing one", skillName);
+                    continue;
+                }
+                skillNameToModifierMap[skillName] = modifier;
+            }
+            foreach (Type stateType in stateTypes)
+            {
+                if (stateType == null || typeToModifierMap.ContainsKey(stateType)) continue;
+                typeToModifierMap[stateType] = modifier;
+            }
+        }
+
         internal static BaseSkillModifier GetSkillModifier(SkillDef skillDef)
         {
             if (skillDef == null)

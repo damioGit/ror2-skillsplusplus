@@ -57,7 +57,42 @@ namespace SkillsPlusPlus.Generic
             On.RoR2.HealthComponent.TakeDamageProcess += TakeDamageProcess;
             RecalculateStatsAPI.GetStatCoefficients += GetStatCoefficients;
             On.RoR2.CharacterBody.RecalculateStats += RecalculateStats;
+            CharacterBody.onBodyStartGlobal += TrackSkillActivations;
         }
+
+        #region Fallback for mods that don't tag damage with a skill slot
+
+        // Some modded survivors (e.g. Seamstress, parts of Starstorm 2) leave DamageSource empty. For those we
+        // attribute untagged, non-proc damage to the skill the player activated most recently.
+        private const float AttributionWindow = 1.5f;
+
+        private sealed class LastSkill { public SkillSlot slot; public float time; }
+
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<CharacterBody, LastSkill> lastSkill =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<CharacterBody, LastSkill>();
+
+        private static void TrackSkillActivations(CharacterBody body)
+        {
+            if (!NetworkServer.active || !body || !body.isPlayerControlled) return;
+            body.onSkillActivatedServer += skill =>
+            {
+                if (!body || !body.skillLocator) return;
+                var entry = lastSkill.GetOrCreateValue(body);
+                entry.slot = body.skillLocator.FindSkillSlot(skill);
+                entry.time = Time.time;
+            };
+        }
+
+        private static SkillSlot GuessSlot(CharacterBody attacker, DamageInfo damageInfo)
+        {
+            DamageSource source = damageInfo.damageType.damageSource;
+            // Only untagged, direct hits: not DoTs, hazards, equipment or item procs.
+            if (source != DamageSource.NoneSpecified || damageInfo.procChainMask.mask != 0) return SkillSlot.None;
+            if (!lastSkill.TryGetValue(attacker, out LastSkill entry) || Time.time - entry.time > AttributionWindow) return SkillSlot.None;
+            return entry.slot;
+        }
+
+        #endregion
 
         /// <summary>True when the player may buy levels of this skill.</summary>
         internal static bool CanUpgrade(string skillName)
@@ -125,9 +160,17 @@ namespace SkillsPlusPlus.Generic
                 if (controller && controller.isSurvivorEnabled)
                 {
                     SkillSlot slot = SlotFromDamageSource(damageInfo.damageType.damageSource);
+                    bool guessed = false;
+                    if (slot == SkillSlot.None)
+                    {
+                        slot = GuessSlot(attacker, damageInfo);
+                        guessed = slot != SkillSlot.None;
+                    }
                     GenericSkill skill = SkillInSlot(attacker, slot);
                     string name = SkillUpgrade.SkillName(skill ? skill.skillDef : null);
-                    int level = controller.GetLevel(name);
+                    // A guessed slot only counts for skills that rely on generic upgrades, so vanilla skills
+                    // (which tag their damage properly) are never double-dipped by item damage.
+                    int level = guessed && !IsGeneric(name) && SkillModifierManager.GetSkillModifierByName(name) == null ? 0 : controller.GetLevel(name);
                     if (level > 0)
                     {
                         float perLevel = DamageBonusPerLevel(name, slot);

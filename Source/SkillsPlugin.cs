@@ -165,6 +165,9 @@ namespace SkillsPlusPlus
         [SystemInitializer(typeof(SurvivorCatalog))]
         private static void OnCatalogInitializer()
         {
+            // Every plugin is loaded by now, so other mods' entity state types can be resolved.
+            ModdedSurvivorModifiers.Register();
+
             foreach (var survivorDef in SurvivorCatalog.allSurvivorDefs)
             {
                 Instance.PrepareSurvivor(survivorDef);
