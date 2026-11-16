@@ -1,5 +1,12 @@
 # Changelog
 
+## What's new in 0.8.0
+- Dedicated upgrades for Executioner, VOL-T and Seamstress, plus more Ranger skills. Modded skills keep the generic cooldown and charge bonuses on top.
+- Tooltips: every skill shows what one level gives, your current level on the HUD, and generic bonuses where they apply. Fixed the tooltip showing a stale skill's text and lingering on item tooltips.
+- Fixed the language file (unescaped quotes made it invalid JSON).
+- Respec: F8 or `spp_respec`, by default only in the Bazaar for 1 lunar coin.
+- Optional bonus skill points per charged teleporter and every N stages.
+
 ## What's new in 0.7.1
 - Seeker: Meditate forgives the first wrong arrow from level 3; Palm Blast hand grows 15%/level and grants Tranquility after 2 characters hit (level 2+); Unseen Hand heals +1.5% of damage per level.
 - False Son: Lunar Spikes regenerate on their own (every 4 s, 0.5 s faster per level); Lunar Stake hits arc lightning to +1 enemy per level.
