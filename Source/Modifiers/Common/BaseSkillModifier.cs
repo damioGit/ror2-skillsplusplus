@@ -114,6 +114,17 @@ namespace SkillsPlusPlus.Modifiers
             return 0f;
         }
 
+        /// <summary>
+        /// Called right after the state's own OnEnter. Use it for states that set their values inside OnEnter
+        /// (e.g. from a config), where changes made in <see cref="OnSkillEnter"/> would be overwritten.
+        /// </summary>
+        public virtual void OnSkillEnterLate(BaseState skillState, int level)
+        {
+        }
+
+        /// <summary>When true, the skill also gets the generic per-level cooldown reduction and extra charges.</summary>
+        public virtual bool UseGenericCooldownAndStock => false;
+
         public virtual void SetupConfig(ConfigFile config)
         {
             return;

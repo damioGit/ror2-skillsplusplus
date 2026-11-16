@@ -170,6 +170,8 @@ namespace SkillsPlusPlus
 
         private static void OnBaseStateEnter(On.EntityStates.BaseState.orig_OnEnter orig, BaseState self)
         {
+            BaseSkillModifier lateModifier = null;
+            SkillUpgrade lateUpgrade = null;
             if (self != null)
             {
                 var modifier = SkillModifierManager.GetSkillModifiersForEntityStateType(self.GetType());
@@ -190,10 +192,25 @@ namespace SkillsPlusPlus
                         {
                             Logger.Error(e);
                         }
+                        lateModifier = modifier;
+                        lateUpgrade = upgrade;
                     }
                 }
             }
             orig(self);
+            if (lateModifier != null && lateUpgrade)
+            {
+                try
+                {
+                    lateModifier.characterBody = lateUpgrade.characterBody;
+                    lateModifier.registeredSkill = lateUpgrade;
+                    lateModifier.OnSkillEnterLate(self, lateUpgrade.skillLevel);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+            }
         }
 
         private static void OnBaseStateExit(On.EntityStates.EntityState.orig_OnExit orig, EntityState self)

@@ -106,6 +106,14 @@ namespace SkillsPlusPlus.Generic
             return GenericEnabled.Value && !string.IsNullOrEmpty(skillName) && !SkillModifierManager.HasSkillModifier(skillName);
         }
 
+        /// <summary>True when the skill gets generic cooldown/stock: no dedicated modifier, or one that opts in.</summary>
+        internal static bool UsesGenericCooldownAndStock(string skillName)
+        {
+            if (!GenericEnabled.Value || string.IsNullOrEmpty(skillName)) return false;
+            var modifier = SkillModifierManager.GetSkillModifierByName(skillName);
+            return modifier == null || modifier.UseGenericCooldownAndStock;
+        }
+
         internal static float DefaultDamagePerLevel(SkillSlot slot)
         {
             switch (slot)
@@ -193,7 +201,7 @@ namespace SkillsPlusPlus.Generic
             {
                 string name = SkillUpgrade.SkillName(skill ? skill.skillDef : null);
                 int level = controller.GetLevel(name);
-                return level > 0 && IsGeneric(name) ? 1f - Mathf.Pow(1f - GenericCooldown.Value, level) : 0f;
+                return level > 0 && UsesGenericCooldownAndStock(name) ? 1f - Mathf.Pow(1f - GenericCooldown.Value, level) : 0f;
             }
 
             SkillLocator locator = sender.skillLocator;
@@ -236,7 +244,7 @@ namespace SkillsPlusPlus.Generic
             {
                 if (!skill) continue;
                 string name = SkillUpgrade.SkillName(skill.skillDef);
-                if (!IsGeneric(name)) continue;
+                if (!UsesGenericCooldownAndStock(name)) continue;
                 int bonus = controller.GetLevel(name) / every;
                 if (bonus > 0)
                 {

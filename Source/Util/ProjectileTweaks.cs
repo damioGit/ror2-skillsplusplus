@@ -24,6 +24,16 @@ namespace SkillsPlusPlus.Util
 
         private static readonly Dictionary<string, Entry> byPrefabName = new Dictionary<string, Entry>(StringComparer.Ordinal);
 
+        // Tweaks keyed by a component type name, for projectiles from other mods whose prefabs we can't reference.
+        private static readonly List<KeyValuePair<Type, Entry>> byComponent = new List<KeyValuePair<Type, Entry>>();
+
+        /// <summary>Registers a tweak for any projectile carrying a component of <paramref name="componentType"/>.</summary>
+        internal static void RegisterByComponent(Type componentType, Action<GameObject, CharacterBody, int> tweak, params string[] skillNames)
+        {
+            if (componentType == null || tweak == null) return;
+            byComponent.Add(new KeyValuePair<Type, Entry>(componentType, new Entry { skillNames = skillNames, tweak = tweak }));
+        }
+
         internal static void InstallHooks()
         {
             On.RoR2.Projectile.ProjectileController.Start += ProjectileController_Start;
@@ -38,6 +48,17 @@ namespace SkillsPlusPlus.Util
 
         private static void ProjectileController_Start(On.RoR2.Projectile.ProjectileController.orig_Start orig, ProjectileController self)
         {
+            if (NetworkServer.active && self && self.owner && byComponent.Count > 0 && self.owner.TryGetComponent(out CharacterBody componentOwner))
+            {
+                foreach (var pair in byComponent)
+                {
+                    if (!self.GetComponent(pair.Key)) continue;
+                    int level = SkillUpgrade.GetLevel(componentOwner, pair.Value.skillNames);
+                    if (level <= 0) continue;
+                    try { pair.Value.tweak(self.gameObject, componentOwner, level); }
+                    catch (Exception e) { Logger.Error(e); }
+                }
+            }
             if (NetworkServer.active && self && self.owner && byPrefabName.Count > 0)
             {
                 string name = self.gameObject.name;
