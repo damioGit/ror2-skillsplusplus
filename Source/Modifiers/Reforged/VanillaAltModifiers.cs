@@ -105,6 +105,11 @@ namespace SkillsPlusPlus.Modifiers
             {
                 cutter.healCoefficient = MultScaling(cutter.healCoefficient, 0.25f, level);
                 cutter.walkSpeedCoefficient = Mathf.Min(1f, cutter.walkSpeedCoefficient + 0.10f * level);
+                // Reach the next power stage faster (the final stage keeps its duration).
+                if (!(skillState is EngiLaserCutter3) && cutter.baseMaxDuration > 0f)
+                {
+                    cutter.baseMaxDuration = MultScaling(cutter.baseMaxDuration, -0.15f, level);
+                }
             }
         }
     }
@@ -125,7 +130,42 @@ namespace SkillsPlusPlus.Modifiers
                     zone.lifetime += 1.5f * lvl;
                 }
                 projectile.transform.localScale *= 1f + 0.15f * lvl;
+                projectile.AddComponent<SlowingCloud>().level = lvl;
             }, "CrocoBreath");
+        }
+    }
+
+    /// <summary>
+    /// Added to Cloying Breath clouds on the host: enemies inside are slowed by 50%, refreshed
+    /// every half second while they stay in the cloud.
+    /// </summary>
+    internal class SlowingCloud : MonoBehaviour
+    {
+        internal int level;
+        private float timer;
+        private TeamIndex ownerTeam = TeamIndex.Player;
+        private float radius = 5f;
+
+        private void Start()
+        {
+            if (TryGetComponent(out ProjectileController controller) && controller.teamFilter) ownerTeam = controller.teamFilter.teamIndex;
+            Collider collider = GetComponentInChildren<Collider>();
+            if (collider) radius = Mathf.Max(radius, collider.bounds.extents.x);
+        }
+
+        private void FixedUpdate()
+        {
+            timer -= Time.fixedDeltaTime;
+            if (timer > 0f) return;
+            timer = 0.5f;
+            BuffDef slow = RoR2Content.Buffs.Slow50;
+            float radiusSqr = radius * radius;
+            foreach (CharacterBody body in CharacterBody.readOnlyInstancesList)
+            {
+                if (!body || !body.teamComponent || body.teamComponent.teamIndex == ownerTeam) continue;
+                if ((body.corePosition - transform.position).sqrMagnitude > radiusSqr) continue;
+                body.AddTimedBuff(slow, 1f);
+            }
         }
     }
 

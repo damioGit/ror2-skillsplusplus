@@ -1,6 +1,6 @@
 {
 	"name": "SkillsPlusPlus",
-	"version_number": "0.7.0",
+	"version_number": "0.7.1",
 	"website_url": "https://github.com/damioGit/ror2-skillsplusplus",
 	"description": "Skill upgrades for every survivor (all DLCs + modded), real multiplayer sync, optional calmer director. Fork of icebro's Skills++.",
 	"dependencies": [

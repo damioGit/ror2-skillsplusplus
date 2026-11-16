@@ -1,5 +1,13 @@
 # Changelog
 
+## What's new in 0.7.1
+- Seeker: Meditate forgives the first wrong arrow from level 3; Palm Blast hand grows 15%/level and grants Tranquility after 2 characters hit (level 2+); Unseen Hand heals +1.5% of damage per level.
+- False Son: Lunar Spikes regenerate on their own (every 4 s, 0.5 s faster per level); Lunar Stake hits arc lightning to +1 enemy per level.
+- Acolyte: Bola gathers +1 enemy per level; Soul Jar haunted enemies release +1 wight per level; Javelin explosion +20% radius per level.
+- Enforcer: first parry of a block refunds 0.5 s of utility cooldown per level; Surge Protection absorbs +12% max HP per level; Crash Point slows enemies around the impact.
+- Operator: Ascent Protocol landing sends a shockwave (150% per level); ADMIN-OVERRIDE gets +1 charge every 2 levels.
+- Acrid: Cloying Breath slows enemies inside the cloud. Engineer: Laser Cutter reaches its next power stage 15% faster per level.
+
 ## What's new in 0.7.0 (damioGit fork, RoR2 1.5.0)
 - **Real multiplayer sync.** The released builds never ran the UNet weaver, so clients only got points at stage start and buying was local. The host now owns points and levels and syncs them to everyone (R2API.Networking); clients ask the host to buy.
 - **Per-player upgrades.** Host-side effects used to read one cached player (several only ever applied to player 1, e.g. Captain DIABLO and Railgunner Supercharge/Cryocharge cooldowns). Everything now uses the acting player's own level, and shared values are only touched on the machine that controls the body.

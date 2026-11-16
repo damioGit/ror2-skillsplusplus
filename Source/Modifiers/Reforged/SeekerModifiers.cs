@@ -1,6 +1,7 @@
 using EntityStates;
 using EntityStates.Seeker;
 using RoR2;
+using RoR2.Projectile;
 using SkillsPlusPlus.Util;
 using UnityEngine;
 
@@ -33,7 +34,7 @@ namespace SkillsPlusPlus.Modifiers
         }
     }
 
-    /// <summary>Unseen Hand: longer targeting range.</summary>
+    /// <summary>Unseen Hand: longer targeting range, and heals +1.5% of damage dealt per level (vanilla 3.5%).</summary>
     [SkillLevelModifier("SeekerBodyUnseenHand", typeof(UnseenHand))]
     internal class SeekerUnseenHandSkillModifier : SimpleSkillModifier<UnseenHand>
     {
@@ -42,6 +43,13 @@ namespace SkillsPlusPlus.Modifiers
         public override void OnSkillEnter(UnseenHand skillState, int level)
         {
             UnseenHand.maxDistance = MultScaling(Originals.Get("UnseenHand.maxDistance", UnseenHand.maxDistance), 0.20f, level);
+            ProjectileTweaks.Register(UnseenHand.fistProjectilePrefab, (projectile, owner, lvl) =>
+            {
+                if (projectile.TryGetComponent(out UnseenHandHealingProjectile healing))
+                {
+                    healing.fractionOfDamage += 0.015f * lvl;
+                }
+            }, "SeekerBodyUnseenHand");
         }
     }
 
@@ -128,6 +136,40 @@ namespace SkillsPlusPlus.Modifiers
             skillState.timePenalty = Mathf.Max(0.2f, skillState.timePenalty - 0.2f * level);
             skillState.failureCooldownPenalty = Mathf.Max(0f, skillState.failureCooldownPenalty - 1f * level);
         }
+
+        // From level 3 the first wrong arrow of each meditation is forgiven: no time penalty, still a perfect run.
+        private const int ForgiveLevel = 3;
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Meditate, object> forgiven =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<Meditate, object>();
+
+        public override void SetupSkill()
+        {
+            base.SetupSkill();
+            On.EntityStates.Seeker.Meditate.Update += (orig, self) =>
+            {
+                bool wrongInput = false;
+                bool wasMissed = self.missedInput;
+                float ageBefore = self.fixedAge;
+                if (self.isAuthority && self.inputBank && self.seekerController && !self.meditationWrapUp
+                    && !forgiven.TryGetValue(self, out _)
+                    && SkillUpgrade.GetLevel(self.characterBody, "SeekerBodyMeditate") >= ForgiveLevel)
+                {
+                    int pressed = -1;
+                    if (self.inputBank.rawMoveUp.justPressed) pressed = 0;
+                    if (self.inputBank.rawMoveDown.justPressed) pressed = 1;
+                    if (self.inputBank.rawMoveRight.justPressed) pressed = 2;
+                    if (self.inputBank.rawMoveLeft.justPressed) pressed = 3;
+                    wrongInput = pressed != -1 && self.seekerController.meditationInputStep < 5 && pressed != self.seekerController.GetNextMeditationStep();
+                }
+                orig(self);
+                if (wrongInput && self.missedInput && !wasMissed)
+                {
+                    forgiven.Add(self, null);
+                    self.missedInput = false;
+                    self.fixedAge = Mathf.Max(ageBefore, self.fixedAge - self.timePenalty);
+                }
+            };
+        }
     }
 
     /// <summary>Palm Blast: charges faster. (Pierce is already infinite, so no pierce upgrade.)</summary>
@@ -143,6 +185,26 @@ namespace SkillsPlusPlus.Modifiers
             {
                 charge.baseChargeDuration = MultScaling(charge.baseChargeDuration, -0.15f, level);
             }
+            else if (skillState is BaseFirePalmBlast fire)
+            {
+                // Bigger hand (15% per level), applied to each spawned projectile on the host.
+                ProjectileTweaks.Register(fire.chargedProjectilePrefab, (projectile, owner, lvl) => projectile.transform.localScale *= 1f + 0.15f * lvl, "SeekerPalmBlast");
+                ProjectileTweaks.Register(fire.projectilePrefab, (projectile, owner, lvl) => projectile.transform.localScale *= 1f + 0.15f * lvl, "SeekerPalmBlast");
+            }
+        }
+
+        public override void SetupSkill()
+        {
+            base.SetupSkill();
+            // Vanilla gives Tranquility every 3 characters hit. From level 2 it takes only 2.
+            On.PalmBlastProjectileController.IncreaseCharactersHit += (orig, self, isSpecialEnemy) =>
+            {
+                if (!isSpecialEnemy && self.charactersHit == 1 && SkillUpgrade.GetLevel(self.ownerBody, "SeekerPalmBlast") >= 2)
+                {
+                    self.charactersHit = 2;
+                }
+                return orig(self, isSpecialEnemy);
+            };
         }
     }
 }

@@ -47,6 +47,35 @@ namespace SkillsPlusPlus.Modifiers
             base.OnSkillLeveledUp(level, characterBody, skillDef);
             skillDef.baseMaxStock = Originals.Get("FS.LunarSpikes.stock", skillDef.baseMaxStock) + level;
         }
+
+        // Spikes also regenerate on their own: one every 4 s at level 1, 0.5 s faster per level (min 1.5 s).
+        private sealed class Timer { public float value; }
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<CharacterBody, Timer> timers =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<CharacterBody, Timer>();
+
+        public override void SetupSkill()
+        {
+            base.SetupSkill();
+            On.RoR2.CharacterBody.FixedUpdate += (orig, self) =>
+            {
+                orig(self);
+                if (!self || !self.hasEffectiveAuthority || !self.isPlayerControlled || !self.skillLocator) return;
+                GenericSkill secondary = self.skillLocator.secondary;
+                if (!secondary || secondary.stock >= secondary.maxStock) return;
+                if (!string.Equals(SkillUpgrade.SkillName(secondary.skillDef), "FalseSonBodyLunarSpikes", System.StringComparison.OrdinalIgnoreCase)) return;
+                int level = SkillUpgrade.GetLevel(self, "FalseSonBodyLunarSpikes");
+                if (level <= 0) return;
+
+                Timer timer = timers.GetOrCreateValue(self);
+                timer.value += Time.fixedDeltaTime;
+                float interval = Mathf.Max(1.5f, 4.5f - 0.5f * level);
+                if (timer.value >= interval)
+                {
+                    timer.value = 0f;
+                    secondary.AddOneStock();
+                }
+            };
+        }
     }
 
     [SkillLevelModifier("FalseSonLunarStake", typeof(LunarStake))]
@@ -58,6 +87,48 @@ namespace SkillsPlusPlus.Modifiers
         {
             base.OnSkillLeveledUp(level, characterBody, skillDef);
             skillDef.baseMaxStock = Originals.Get("FS.LunarStake.stock", skillDef.baseMaxStock) + level / 2;
+        }
+
+        // Stake hits arc lightning to one more enemy per level (40% of the hit, host-side).
+        public override void SetupSkill()
+        {
+            base.SetupSkill();
+            On.RoR2.GlobalEventManager.OnHitEnemy += (orig, self, damageInfo, victim) =>
+            {
+                orig(self, damageInfo, victim);
+                if (!NetworkServer.active || damageInfo == null || !damageInfo.attacker || !victim) return;
+                if ((damageInfo.damageType.damageSource & DamageSource.Secondary) == 0) return;
+                if (damageInfo.procChainMask.HasProc(ProcType.ChainLightning)) return;
+                if (!damageInfo.attacker.TryGetComponent(out CharacterBody attacker) || !attacker.skillLocator || !attacker.skillLocator.secondary) return;
+                if (!string.Equals(SkillUpgrade.SkillName(attacker.skillLocator.secondary.skillDef), "FalseSonLunarStake", System.StringComparison.OrdinalIgnoreCase)) return;
+                int level = SkillUpgrade.GetLevel(attacker, "FalseSonLunarStake");
+                if (level <= 0) return;
+
+                var orb = new RoR2.Orbs.LightningOrb
+                {
+                    origin = damageInfo.position,
+                    damageValue = damageInfo.damage * 0.4f,
+                    isCrit = damageInfo.crit,
+                    bouncesRemaining = level,
+                    teamIndex = attacker.teamComponent ? attacker.teamComponent.teamIndex : TeamIndex.Player,
+                    attacker = damageInfo.attacker,
+                    procCoefficient = 0.2f,
+                    lightningType = RoR2.Orbs.LightningOrb.LightningType.Ukulele,
+                    damageColorIndex = DamageColorIndex.Item,
+                    range = 20f,
+                    damageType = new DamageTypeCombo(DamageType.Generic, DamageTypeExtended.Generic, DamageSource.NoneSpecified),
+                };
+                orb.procChainMask = damageInfo.procChainMask;
+                orb.procChainMask.AddProc(ProcType.ChainLightning);
+                orb.bouncedObjects = new System.Collections.Generic.List<HealthComponent>();
+                if (victim.TryGetComponent(out HealthComponent victimHealth)) orb.bouncedObjects.Add(victimHealth);
+                HurtBox target = orb.PickNextTarget(damageInfo.position);
+                if (target)
+                {
+                    orb.target = target;
+                    RoR2.Orbs.OrbManager.instance.AddOrb(orb);
+                }
+            };
         }
     }
 
@@ -203,6 +274,17 @@ namespace SkillsPlusPlus.Modifiers
                 int level = SkillUpgrade.GetLevel(sender, "Command");
                 if (level > 0) args.secondaryCooldownMultAdd -= 1f - Mathf.Pow(0.92f, level);
             };
+            // One extra charge every 2 levels, on top of one per drone. The game resets secondary bonus stock
+            // in every RecalculateStats, so adding after it is stable.
+            On.RoR2.CharacterBody.RecalculateStats += (orig, self) =>
+            {
+                orig(self);
+                if (!self || !self.skillLocator || !self.skillLocator.secondary) return;
+                GenericSkill secondary = self.skillLocator.secondary;
+                if (!string.Equals(SkillUpgrade.SkillName(secondary.skillDef), "Command", System.StringComparison.OrdinalIgnoreCase)) return;
+                int bonus = SkillUpgrade.GetLevel(self, "Command") / 2;
+                if (bonus > 0) secondary.SetBonusStockFromBody(secondary.bonusStockFromBody + bonus);
+            };
         }
     }
 
@@ -236,6 +318,31 @@ namespace SkillsPlusPlus.Modifiers
         {
             skillState.upwardVelocity = MultScaling(skillState.upwardVelocity, 0.10f, level);
             skillState.forwardVelocity = MultScaling(skillState.forwardVelocity, 0.10f, level);
+        }
+
+        /// <summary>Landing from Ascent Protocol sends out a shockwave: 150% damage per level in 8 m (host-side).</summary>
+        public override void OnSkillExit(DroneLeap skillState, int level)
+        {
+            CharacterBody body = skillState.characterBody;
+            if (!NetworkServer.active || level <= 0 || !body || !skillState.isGrounded || !body.teamComponent) return;
+            new BlastAttack
+            {
+                attacker = body.gameObject,
+                inflictor = body.gameObject,
+                teamIndex = body.teamComponent.teamIndex,
+                position = body.footPosition,
+                radius = 8f,
+                baseDamage = body.damage * 1.5f * level,
+                baseForce = 800f,
+                crit = body.RollCrit(),
+                procCoefficient = 0.5f,
+                falloffModel = BlastAttack.FalloffModel.Linear,
+                attackerFiltering = AttackerFiltering.NeverHitSelf,
+                damageColorIndex = DamageColorIndex.Default,
+                damageType = new DamageTypeCombo(DamageType.Generic, DamageTypeExtended.Generic, DamageSource.Utility),
+            }.Fire();
+            EffectManager.SpawnEffect(LegacyResourcesAPI.Load<GameObject>("Prefabs/Effects/ImpactEffects/PodGroundImpact"),
+                new EffectData { origin = body.footPosition, scale = 8f }, transmit: true);
         }
     }
 
@@ -276,16 +383,47 @@ namespace SkillsPlusPlus.Modifiers
         }
     }
 
-    [SkillLevelModifier("Bola", typeof(BolaWhip))]
-    internal class AcolyteBolaSkillModifier : SimpleSkillModifier<BolaWhip>
+    /// <summary>Bola Throw: gathers one more enemy per level (vanilla 5). The gather runs on the bola projectile.</summary>
+    [SkillLevelModifier("Bola", typeof(BolaWhip), typeof(RoR2.Projectile.BolaProjectileController.GatherState))]
+    internal class AcolyteBolaSkillModifier : BaseSkillModifier
     {
         public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+
+        public override void OnSkillEnter(BaseState skillState, int level)
+        {
+            base.OnSkillEnter(skillState, level);
+            if (skillState is RoR2.Projectile.BolaProjectileController.GatherState)
+            {
+                RoR2.Projectile.BolaProjectileController.GatherState.maxTargets =
+                    Originals.Get("Acolyte.Bola.maxTargets", RoR2.Projectile.BolaProjectileController.GatherState.maxTargets) + level;
+            }
+        }
     }
 
+    /// <summary>Soul Jar: haunted enemies release one more wight per level when they die.</summary>
     [SkillLevelModifier("AimSoulJar", typeof(AimSoulJar))]
     internal class AcolyteSoulJarSkillModifier : SimpleSkillModifier<AimSoulJar>
     {
         public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<WightLauncher, object> boosted =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<WightLauncher, object>();
+
+        public override void SetupSkill()
+        {
+            base.SetupSkill();
+            On.RoR2.WightLauncher.FixedUpdate += (orig, self) =>
+            {
+                // First tick of a new launcher (spawned on the host when a haunted enemy dies).
+                if (NetworkServer.active && self.owner && self.remaining > 0 && !boosted.TryGetValue(self, out _))
+                {
+                    boosted.Add(self, null);
+                    int level = SkillUpgrade.GetLevel(self.owner.GetComponent<CharacterBody>(), "AimSoulJar");
+                    if (level > 0) self.remaining += level;
+                }
+                orig(self);
+            };
+        }
     }
 
     /// <summary>Blade Sling: dashing to the blade grants a short invulnerability window.</summary>
@@ -302,10 +440,22 @@ namespace SkillsPlusPlus.Modifiers
         }
     }
 
+    /// <summary>Javelin: 20% bigger explosion per level.</summary>
     [SkillLevelModifier("ThrowJavelin", typeof(ThrowJavelin))]
     internal class AcolyteJavelinSkillModifier : SimpleSkillModifier<ThrowJavelin>
     {
         public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.10f;
+
+        public override void OnSkillEnter(ThrowJavelin skillState, int level)
+        {
+            ProjectileTweaks.Register(skillState.projectilePrefab, (projectile, owner, lvl) =>
+            {
+                foreach (var explosion in projectile.GetComponents<RoR2.Projectile.ProjectileExplosion>())
+                {
+                    explosion.blastRadius *= 1f + 0.20f * lvl;
+                }
+            }, "ThrowJavelin");
+        }
     }
 
     /// <summary>Sacrifice: an extra Conviction every 2 levels, so the Litany comes sooner.</summary>
@@ -359,9 +509,25 @@ namespace SkillsPlusPlus.Modifiers
             if (skillState is ProtectAndServeDeactivate deactivate)
                 deactivate.deflectDamageMultiplier = MultScaling(deactivate.deflectDamageMultiplier, 0.20f, level);
         }
+
+        // The first successful parry of each block refunds 0.5 s of utility cooldown per level.
+        public override void SetupSkill()
+        {
+            base.SetupSkill();
+            On.EntityStates.Enforcer.ProtectAndServeDeactivate.TriggerParry += (orig, self, vfxOrigin) =>
+            {
+                bool firstParry = self.parryCount == 0;
+                orig(self, vfxOrigin);
+                if (!firstParry || !self.isAuthority || !self.characterBody || !self.characterBody.skillLocator) return;
+                int level = SkillUpgrade.GetLevel(self.characterBody, "EnforcerProtectAndServeActivate");
+                GenericSkill utility = self.characterBody.skillLocator.utility;
+                if (level > 0 && utility) utility.RunRecharge(0.5f * level);
+            };
+        }
     }
 
-    [SkillLevelModifier("EnforcerKineticCharge2", typeof(KineticCharge2Activate), typeof(KineticChargeExplode))]
+    /// <summary>Surge Protection: lasts longer, absorbs 12% more of your max HP per level before it pops, bigger explosion.</summary>
+    [SkillLevelModifier("EnforcerKineticCharge2", typeof(KineticCharge2Activate), typeof(KineticCharge2ActivateDamageLimited), typeof(KineticChargeExplode))]
     internal class EnforcerSurgeProtectionSkillModifier : BaseSkillModifier
     {
         public override float SlotDamageBonusPerLevel(SkillSlot slot) => 0.12f;
@@ -370,7 +536,10 @@ namespace SkillsPlusPlus.Modifiers
         {
             base.OnSkillEnter(skillState, level);
             if (skillState is KineticCharge2Activate)
+            {
                 KineticCharge2Activate.durationLimit = Originals.Get("Enf.Surge.duration", KineticCharge2Activate.durationLimit) + 1f * level;
+                KineticCharge2Activate.damageLimitFraction = Originals.Get("Enf.Surge.damageLimit", KineticCharge2Activate.damageLimitFraction) + 0.12f * level;
+            }
             else if (skillState is KineticChargeExplode)
                 KineticChargeExplode.maxRadius = MultScaling(Originals.Get("Enf.Surge.maxRadius", KineticChargeExplode.maxRadius), 0.15f, level);
         }
@@ -413,7 +582,25 @@ namespace SkillsPlusPlus.Modifiers
         {
             base.OnSkillEnter(skillState, level);
             if (skillState is ShieldSlamImpact impact)
+            {
                 impact.slamRadius = MultScaling(impact.slamRadius, 0.15f, level);
+                SlowAround(impact.characterBody, impact.slamRadius * 1.5f);
+            }
+        }
+
+        /// <summary>Host-side: slows enemies around the impact by 50% for 2 seconds.</summary>
+        private static void SlowAround(CharacterBody body, float radius)
+        {
+            if (!NetworkServer.active || !body || !body.teamComponent) return;
+            Vector3 center = body.footPosition;
+            float radiusSqr = radius * radius;
+            foreach (CharacterBody other in CharacterBody.readOnlyInstancesList)
+            {
+                if (!other || !other.teamComponent || other.teamComponent.teamIndex == body.teamComponent.teamIndex) continue;
+                if (!other.healthComponent || !other.healthComponent.alive) continue;
+                if ((other.corePosition - center).sqrMagnitude > radiusSqr) continue;
+                other.AddTimedBuff(RoR2Content.Buffs.Slow50, 2f);
+            }
         }
     }
 
