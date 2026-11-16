@@ -69,7 +69,9 @@ namespace SkillsPlusPlus.UI
             string token = SkillUpgradeTooltipProvider.SkillNameToToken(skillName);
             if (SlotUpgrades.IsGeneric(skillName))
             {
-                int damage = Mathf.RoundToInt(SlotUpgrades.DefaultDamagePerLevel(slot == SkillSlot.None ? SkillSlot.Secondary : slot) * 100f);
+                // Passives (loadout "Misc" row, e.g. Acrid's Poison/Blight) have no HUD skill icon and cannot be bought.
+                if (slot == SkillSlot.None) return null;
+                int damage = Mathf.RoundToInt(SlotUpgrades.DefaultDamagePerLevel(slot) * 100f);
                 if (damage > 0) parts.Add(Language.GetStringFormatted("TOOLTIP_UPGRADE_GENERIC_DAMAGE", damage));
             }
             else if (!Language.IsTokenInvalid(token))
