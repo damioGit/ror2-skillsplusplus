@@ -104,6 +104,16 @@ namespace SkillsPlusPlus.Modifiers
             return;
         }
 
+        /// <summary>
+        /// Damage multiplier per level applied on the host to damage dealt by this skill's slot
+        /// (see SkillsPlusPlus.Generic.SlotUpgrades). 0 = the modifier handles damage itself.
+        /// New modifiers usually return SlotUpgrades.DefaultDamagePerLevel(slot) or a custom value.
+        /// </summary>
+        public virtual float SlotDamageBonusPerLevel(SkillSlot slot)
+        {
+            return 0f;
+        }
+
         public virtual void SetupConfig(ConfigFile config)
         {
             return;

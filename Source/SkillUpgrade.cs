@@ -93,7 +93,7 @@ namespace SkillsPlusPlus
         {
             if (!isSurvivorEnabled || targetGenericSkill == null) return false;
             if (!skillPointsController.hasUnspentPoints) return false;
-            return SkillModifierManager.HasSkillModifier(targetBaseSkillName);
+            return Generic.SlotUpgrades.CanUpgrade(targetBaseSkillName);
         }
 
         /// <summary>Level of the given skill (by SkillDef name) on this body, or 0.</summary>
@@ -126,7 +126,16 @@ namespace SkillsPlusPlus
             return level;
         }
 
-        internal static string SkillName(SkillDef skillDef) => skillDef ? ((ScriptableObject)skillDef).name : null;
+        /// <summary>
+        /// The key a skill is identified by: the SkillDef asset name, or its skillName when the asset has no name
+        /// (some mods, e.g. Sandswept, create unnamed SkillDefs).
+        /// </summary>
+        public static string SkillName(SkillDef skillDef)
+        {
+            if (!skillDef) return null;
+            string name = ((ScriptableObject)skillDef).name;
+            return string.IsNullOrEmpty(name) ? skillDef.skillName : name;
+        }
 
         private static SkillDef GetActiveSkillDef(GenericSkill genericSkill)
         {

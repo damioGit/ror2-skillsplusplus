@@ -134,7 +134,7 @@ namespace SkillsPlusPlus
                     break;
                 }
             }
-            if (target == null || !SkillModifierManager.HasSkillModifier(skillName)) return;
+            if (target == null || !Generic.SlotUpgrades.CanUpgrade(skillName)) return;
 
             RecomputeUnspent();
             if (unspentSkillPoints <= 0) return;

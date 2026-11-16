@@ -96,7 +96,7 @@ namespace SkillsPlusPlus
             {
                 return null;
             }
-            return GetSkillModifierByName(((ScriptableObject)skillDef)?.name);
+            return GetSkillModifierByName(SkillUpgrade.SkillName(skillDef));
         }
 
         internal static BaseSkillModifier GetSkillModifierByName(string skillName)
@@ -118,7 +118,7 @@ namespace SkillsPlusPlus
             {
                 return false;
             }
-            return HasSkillModifier(((ScriptableObject)skillDef)?.name);
+            return HasSkillModifier(SkillUpgrade.SkillName(skillDef));
         }
 
         internal static bool HasSkillModifier(string baseSkillName)

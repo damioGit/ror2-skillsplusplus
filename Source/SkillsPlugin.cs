@@ -76,6 +76,7 @@ namespace SkillsPlusPlus
 
             InitConfig();
             Director.CalmerDirector.Init(Config);
+            Generic.SlotUpgrades.Init(Config);
         }
 
         private static void TooltipController_SetTooltipProvider(On.RoR2.UI.TooltipController.orig_SetTooltipProvider orig, TooltipController self, TooltipProvider provider)
