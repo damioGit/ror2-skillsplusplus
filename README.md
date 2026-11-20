@@ -123,7 +123,7 @@ Every skill can be upgraded. Skills marked *generic* get +15-20% damage (by slot
 | Primary | Laser Cutter | +15% damage, +25% turret and drone healing, +10% move speed while cutting, power stages 15% faster |
 | Primary | Guided Salvo | dedicated upgrade from EggsSkills |
 | Primary | Laser Focus | *generic* |
-| Secondary | Pressure Mines | -10% arming time, +20% damaFge, +20% blast size, and +20% trigger range |
+| Secondary | Pressure Mines | -10% arming time, +20% damage, +20% blast size, and +20% trigger range |
 | Secondary | Spider Mines | +30% trigger range, +20% damage, +25% blast radius and +1 mine every 2 levels |
 | Secondary | T-3514 Shock Mines | dedicated upgrade from EggsSkills |
 | Utility | Bubble Shield | +15% duration and +15% size |

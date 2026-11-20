@@ -32,7 +32,7 @@
 		"TOOLBOTBODYSWAP_UPGRADE_DESCRIPTION": "Grants <style=cIsUtility>+1</style> second of bonus attack speed and <style=cIsUtility>+1</style> second equipment cooldown",
 		"TOOLBOTDUALWIELD_UPGRADE_DESCRIPTION": "Gain <style=cIsUtility>+25</style> armor, <style=cIsDamage>+15%</style> damage and <style=cIsUtility>+10%</style> speed",
 		"ENGIBODYFIREGRENADE_UPGRADE_DESCRIPTION": "<style=cIsDamage>+1</style> and <style=cIsDamage>+2</style> to the minimum and maximum grenades fired",
-		"ENGIBODYPLACEMINE_UPGRADE_DESCRIPTION": "<style=cIsUtility>-10%</style> arming time, <style=cIsDamage>+20%</style> damaFge, <style=cIsUtility>+20%</style> blast size, and <style=cIsUtility>+20%</style> trigger range",
+		"ENGIBODYPLACEMINE_UPGRADE_DESCRIPTION": "<style=cIsUtility>-10%</style> arming time, <style=cIsDamage>+20%</style> damage, <style=cIsUtility>+20%</style> blast size, and <style=cIsUtility>+20%</style> trigger range",
 		"ENGIBODYPLACESPIDERMINE_UPGRADE_DESCRIPTION": "<style=cIsUtility>+30%</style> trigger range, <style=cIsDamage>+20%</style> damage, <style=cIsUtility>+25%</style> blast radius and <style=cIsUtility>+1</style> mine every 2 levels",
 		"ENGIBODYPLACEBUBBLESHIELD_UPGRADE_DESCRIPTION": "<style=cIsUtility>+15%</style> duration and <style=cIsUtility>+15%</style> size",
 		"ENGIHARPOONS_UPGRADE_DESCRIPTION": "<style=cIsUtility>+1</style> ammo, <style=cIsDamage>+20%</style> damage, and <style=cIsUtility>+30%</style> range",
