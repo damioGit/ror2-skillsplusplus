@@ -4,7 +4,7 @@ Spend skill points on your skills as you level up. Every survivor, every DLC, su
 
 Fork of [Skills++](https://thunderstore.io/package/CWMlolzlz/SkillsPlusPlus/) by CWMlolzlz, continued by Volvary and [icebro](https://thunderstore.io/package/icebro/SkillsPlusPlus/). Updated for **Risk of Rain 2 1.5.0**.
 
-**Everyone in the lobby needs this mod.**
+**Everyone in the lobby needs this mod.** It replaces the older Skills++ packages (same plugin ID), so **uninstall other Skills++ versions** first.
 
 ## How it works
 
