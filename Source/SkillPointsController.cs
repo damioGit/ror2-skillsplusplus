@@ -107,7 +107,9 @@ namespace SkillsPlusPlus
             TeamIndex team = master.teamIndex;
             if (team != TeamIndex.None && TeamManager.instance)
             {
-                int teamLevel = (int)TeamManager.instance.GetTeamLevel(team);
+                // The real, earned level. GetTeamLevel returns a stage's override instead (Harrowing pins the
+                // team at level 15), which used to hand out free points that were kept after leaving.
+                int teamLevel = (int)TeamManager.instance.teamLevels[(int)team];
                 levelPoints = Math.Max(levelPoints, SkillPointsAtLevel(teamLevel));
             }
             earnedSkillPoints = levelPoints + bonusPoints;

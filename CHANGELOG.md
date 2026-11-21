@@ -1,5 +1,9 @@
 # Changelog
 
+## What's new in 0.9.1
+- Fixed free skill points in Harrowing: points now come from the level you actually earned, not the stage's fixed level 15 (those points were kept after leaving).
+- Fixed a typo in the Pressure Mines upgrade text.
+
 ## What's new in 0.9.0 (original tempo)
 - Every new and DLC survivor upgrade now follows the original mod's tempo: about +20% damage per point plus a mechanic (spam primaries +15%, big nukes up to +25%). Seeker, False Son, Drifter, Operator, Acolyte, Enforcer and the 1.4/1.5 vanilla alts were roughly half as strong before.
 - Modded survivors: dedicated upgrades +15% (primary) / +20% (others); generic upgrades +15 / +15 / +20%.
