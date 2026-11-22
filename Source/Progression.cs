@@ -22,6 +22,7 @@ namespace SkillsPlusPlus
         internal static ConfigEntry<int> RespecLunarCoinCost;
         internal static ConfigEntry<int> PointsPerTeleporter;
         internal static ConfigEntry<int> StagesPerBonusPoint;
+        internal static ConfigEntry<int> MaxSkillLevel;
 
         internal static void Init(ConfigFile config)
         {
@@ -36,7 +37,11 @@ namespace SkillsPlusPlus
             StagesPerBonusPoint = config.Bind("Bonus points", "Stages per bonus point", 0,
                 "Every player gets an extra skill point every this many cleared stages. 0 = off. The host's setting is used.");
 
+            MaxSkillLevel = config.Bind("Skills++", "Max level per skill", 10,
+                "Highest level a single skill can reach. 0 = no limit. The host's setting is used.");
+
             ModSettingsManager.AddOption(new KeyBindOption(RespecKey));
+            ModSettingsManager.AddOption(new IntSliderOption(MaxSkillLevel, new IntSliderConfig { min = 0, max = 30 }));
             ModSettingsManager.AddOption(new CheckBoxOption(RespecOnlyInBazaar));
             ModSettingsManager.AddOption(new IntSliderOption(RespecLunarCoinCost, new IntSliderConfig { min = 0, max = 10 }));
             ModSettingsManager.AddOption(new IntSliderOption(PointsPerTeleporter, new IntSliderConfig { min = 0, max = 5 }));

@@ -1,7 +1,14 @@
 # Changelog
 
 ## What's new in 0.9.1
-- Fixed free skill points in Harrowing: points now come from the level you actually earned, not the stage's fixed level 15 (those points were kept after leaving).
+
+**Oops:** I messed up the 0.9.0 release. It went out while the GitHub repo was still private, so there was no source link and nowhere to report bugs. The repo is public now: https://github.com/damioGit/ror2-skillsplusplus (issues welcome). The README also has a proper credits section for everyone who worked on Skills++ before.
+
+- **Fixed free skill points in Harrowing.** Points now come from the level you actually earned, not the stage's fixed level 15 (those points were kept after leaving).
+- **Fixed points being spendable twice.** Spent points now count every level you bought, not just the skills you have right now, so temporarily replaced skills (Void Fiend's corrupted mode, Heresy items) no longer hand out refunds.
+- **Forms share levels.** Void Fiend's corrupted skills, Heresy replacements and CHEF's boosted skills now use the level of the skill they replace.
+- **New: max level per skill**, 10 by default (config, 0 = no limit). The tooltip shows it, e.g. "level 3/10".
+- **Calmer Director is now off by default.** Turn it on in the config if you want fewer monsters and rarer elites. Existing configs keep their setting.
 - Fixed a typo in the Pressure Mines upgrade text.
 
 ## What's new in 0.9.0 (original tempo)

@@ -32,6 +32,7 @@ namespace SkillsPlusPlus.Networking
         private int unspent;
         private int levelsPerSkillPoint;
         private bool multScalingLinear;
+        private int maxSkillLevel;
         private List<KeyValuePair<string, int>> levels = new List<KeyValuePair<string, int>>();
 
         public SyncSkillPointsMessage() { }
@@ -44,6 +45,7 @@ namespace SkillsPlusPlus.Networking
             unspent = controller.unspentSkillPoints;
             levelsPerSkillPoint = controller.levelsPerSkillPoint;
             multScalingLinear = controller.multScalingLinear;
+            maxSkillLevel = controller.maxSkillLevel;
             levels = controller.GetAllLevels();
         }
 
@@ -55,6 +57,7 @@ namespace SkillsPlusPlus.Networking
             writer.WritePackedUInt32((uint)unspent);
             writer.WritePackedUInt32((uint)levelsPerSkillPoint);
             writer.Write(multScalingLinear);
+            writer.WritePackedUInt32((uint)maxSkillLevel);
             writer.WritePackedUInt32((uint)levels.Count);
             foreach (var pair in levels)
             {
@@ -71,6 +74,7 @@ namespace SkillsPlusPlus.Networking
             unspent = (int)reader.ReadPackedUInt32();
             levelsPerSkillPoint = (int)reader.ReadPackedUInt32();
             multScalingLinear = reader.ReadBoolean();
+            maxSkillLevel = (int)reader.ReadPackedUInt32();
             int count = (int)reader.ReadPackedUInt32();
             levels = new List<KeyValuePair<string, int>>(count);
             for (int i = 0; i < count; i++)
@@ -92,7 +96,7 @@ namespace SkillsPlusPlus.Networking
                 Logger.Debug("SyncSkillPointsMessage: no controller for master {0}", masterId);
                 return;
             }
-            controller.ClientApplySync(survivorEnabled, earned, unspent, levelsPerSkillPoint, multScalingLinear, levels);
+            controller.ClientApplySync(survivorEnabled, earned, unspent, levelsPerSkillPoint, multScalingLinear, maxSkillLevel, levels);
         }
     }
 

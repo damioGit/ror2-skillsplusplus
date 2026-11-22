@@ -34,7 +34,7 @@ namespace SkillsPlusPlus
         private void Awake()
         {
             characterBody = GetComponent<CharacterBody>();
-            targetBaseSkillName = SkillName(targetGenericSkill ? targetGenericSkill.skillDef : null);
+            targetBaseSkillName = BaseSkillName(targetGenericSkill);
         }
 
         private void OnEnable()
@@ -56,16 +56,44 @@ namespace SkillsPlusPlus
 
         private void OnSkillChanged(GenericSkill genericSkill)
         {
-            targetBaseSkillName = SkillName(genericSkill ? genericSkill.skillDef : null);
+            targetBaseSkillName = BaseSkillName(genericSkill);
             RefreshUpgrades();
         }
 
         /// <summary>Re-reads the level from the controller and re-applies the modifier on the owning machine.</summary>
         public void RefreshUpgrades()
         {
+            UpdateOverrideAlias();
             skillLevel = skillPointsController ? skillPointsController.GetLevel(targetBaseSkillName) : 0;
             if (!isSurvivorEnabled) return;
             ApplyLevelLocally();
+        }
+
+        private string aliasedSkillName;
+
+        /// <summary>
+        /// While a form/override skill replaces this slot's loadout skill, it shares the loadout skill's level (so
+        /// host-side hooks asking for the override by name get the right level). Only for overrides that have a
+        /// dedicated modifier; e.g. Railgunner's scoped shot is upgraded through the scope skill instead.
+        /// </summary>
+        private void UpdateOverrideAlias()
+        {
+            if (!skillPointsController) return;
+            if (aliasedSkillName != null) skillPointsController.ClearOverrideAlias(aliasedSkillName);
+            aliasedSkillName = null;
+            string active = SkillName(GetActiveSkillDef(targetGenericSkill));
+            if (string.IsNullOrEmpty(active) || string.IsNullOrEmpty(targetBaseSkillName)) return;
+            if (string.Equals(active, targetBaseSkillName, StringComparison.OrdinalIgnoreCase)) return;
+            if (!SkillModifierManager.HasSkillModifier(active)) return;
+            skillPointsController.SetOverrideAlias(active, targetBaseSkillName);
+            aliasedSkillName = active;
+        }
+
+        /// <summary>The loadout skill of a slot (not a temporary override); levels are bought and stored for it.</summary>
+        internal static string BaseSkillName(GenericSkill genericSkill)
+        {
+            if (!genericSkill) return null;
+            return SkillName(genericSkill.baseSkill ? genericSkill.baseSkill : genericSkill.skillDef);
         }
 
         private void ApplyLevelLocally()
@@ -93,6 +121,7 @@ namespace SkillsPlusPlus
         {
             if (!isSurvivorEnabled || targetGenericSkill == null) return false;
             if (!skillPointsController.hasUnspentPoints) return false;
+            if (skillPointsController.IsAtMaxLevel(targetBaseSkillName)) return false;
             return Generic.SlotUpgrades.CanUpgrade(targetBaseSkillName);
         }
 

@@ -27,7 +27,7 @@ namespace SkillsPlusPlus.Director
 
         internal static void Init(ConfigFile config)
         {
-            Enabled = config.Bind("Calmer Director", "Enabled", true,
+            Enabled = config.Bind("Calmer Director", "Enabled", false,
                 "Fewer monsters alive at once and fewer elites. Only the host's setting matters.");
             MonsterLimit = config.Bind("Calmer Director", "Monster limit", 25,
                 "Max monster-team characters alive at once. Vanilla = 40.");

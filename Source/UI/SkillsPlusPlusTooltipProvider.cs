@@ -47,7 +47,16 @@ namespace SkillsPlusPlus.UI
         internal int GetLevel()
         {
             if (!skillIcon || !skillIcon.targetSkill) return -1;
-            return SkillUpgrade.GetLevel(skillIcon.targetSkill.characterBody, GetSkillName());
+            // Levels are stored for the loadout skill; a temporary form/override shares them.
+            return SkillUpgrade.GetLevel(skillIcon.targetSkill.characterBody, SkillUpgrade.BaseSkillName(skillIcon.targetSkill));
+        }
+
+        /// <summary>The host's per-skill level limit (0 = none), or 0 when unknown.</summary>
+        internal int GetMaxLevel()
+        {
+            if (!skillIcon || !skillIcon.targetSkill) return 0;
+            var controller = SkillPointsController.FromBody(skillIcon.targetSkill.characterBody);
+            return controller ? controller.maxSkillLevel : 0;
         }
 
         internal string GetToken() => SkillNameToToken(GetSkillName());

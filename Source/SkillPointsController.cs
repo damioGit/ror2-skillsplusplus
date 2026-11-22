@@ -35,6 +35,13 @@ namespace SkillsPlusPlus
         public int levelsPerSkillPoint { get; private set; } = 5;
         public bool multScalingLinear { get; private set; }
 
+        /// <summary>Highest level any one skill can reach (host setting, synced). 0 = no limit.</summary>
+        public int maxSkillLevel { get; private set; } = 10;
+
+        // A form/override skill (Void Fiend corruption, Heresy items, CHEF boosts...) uses the level of the loadout
+        // skill it temporarily replaces. Maps the active override's name to that base skill's name.
+        private readonly Dictionary<string, string> overrideAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
         public bool hasUnspentPoints => unspentSkillPoints > 0;
 
         internal NetworkInstanceId MasterNetId => master ? master.netId : NetworkInstanceId.Invalid;
@@ -52,7 +59,26 @@ namespace SkillsPlusPlus
         public int GetLevel(string skillName)
         {
             if (string.IsNullOrEmpty(skillName)) return 0;
-            return skillLevels.TryGetValue(skillName, out int level) ? level : 0;
+            if (skillLevels.TryGetValue(skillName, out int level)) return level;
+            if (overrideAliases.TryGetValue(skillName, out string baseName) && skillLevels.TryGetValue(baseName, out level)) return level;
+            return 0;
+        }
+
+        /// <summary>True when the skill already sits at the level limit.</summary>
+        public bool IsAtMaxLevel(string skillName)
+        {
+            return maxSkillLevel > 0 && GetLevel(skillName) >= maxSkillLevel;
+        }
+
+        internal void SetOverrideAlias(string activeSkillName, string baseSkillName)
+        {
+            if (string.IsNullOrEmpty(activeSkillName) || string.IsNullOrEmpty(baseSkillName)) return;
+            overrideAliases[activeSkillName] = baseSkillName;
+        }
+
+        internal void ClearOverrideAlias(string activeSkillName)
+        {
+            if (!string.IsNullOrEmpty(activeSkillName)) overrideAliases.Remove(activeSkillName);
         }
 
         internal List<KeyValuePair<string, int>> GetAllLevels() => new List<KeyValuePair<string, int>>(skillLevels);
@@ -100,6 +126,9 @@ namespace SkillsPlusPlus
 
             levelsPerSkillPoint = Math.Max(1, ConVars.ConVars.levelsPerSkillPoint.value);
             multScalingLinear = ConVars.ConVars.multScalingLinear.value;
+            int previousMax = maxSkillLevel;
+            maxSkillLevel = Math.Max(0, Progression.MaxSkillLevel.Value);
+            forceSync |= previousMax != maxSkillLevel;
 
             int previousEarned = earnedSkillPoints;
             int previousUnspent = unspentSkillPoints;
@@ -138,6 +167,8 @@ namespace SkillsPlusPlus
                 }
             }
             if (target == null || !Generic.SlotUpgrades.CanUpgrade(skillName)) return;
+            maxSkillLevel = Math.Max(0, Progression.MaxSkillLevel.Value);
+            if (IsAtMaxLevel(skillName)) return;
 
             RecomputeUnspent();
             if (unspentSkillPoints <= 0) return;
@@ -200,20 +231,11 @@ namespace SkillsPlusPlus
 
         private void RecomputeUnspent()
         {
+            // Every level bought this run counts, whether or not that skill is active right now. Counting only the
+            // skills currently on the body refunded points whenever a skill was temporarily replaced (Void Fiend
+            // corruption, Heresy items), and those points could be spent twice.
             int spent = 0;
-            CharacterBody currentBody = body;
-            if (currentBody)
-            {
-                var counted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var upgrade in currentBody.GetComponents<SkillUpgrade>())
-                {
-                    string name = upgrade.targetBaseSkillName;
-                    if (!string.IsNullOrEmpty(name) && counted.Add(name))
-                    {
-                        spent += GetLevel(name);
-                    }
-                }
-            }
+            foreach (int level in skillLevels.Values) spent += level;
             unspentSkillPoints = Math.Max(0, earnedSkillPoints - spent);
         }
 
@@ -233,8 +255,9 @@ namespace SkillsPlusPlus
 
         #region Client
 
-        internal void ClientApplySync(bool enabled, int earned, int unspent, int levelsPer, bool linear, List<KeyValuePair<string, int>> levels)
+        internal void ClientApplySync(bool enabled, int earned, int unspent, int levelsPer, bool linear, int maxLevel, List<KeyValuePair<string, int>> levels)
         {
+            maxSkillLevel = maxLevel;
             isSurvivorEnabled = enabled;
             earnedSkillPoints = earned;
             unspentSkillPoints = unspent;

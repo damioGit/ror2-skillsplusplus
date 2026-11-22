@@ -1,8 +1,10 @@
 # Skills++ (2026 fork)
 
+[![Thunderstore](https://img.shields.io/static/v1?label=thunderstore&message=MythMDS-SkillsPlusPlus&color=23B8C7)](https://thunderstore.io/c/riskofrain2/p/MythMDS/SkillsPlusPlus/) [![source code](https://img.shields.io/static/v1?label=github&logo=github&message=source%20code&color=24292E)](https://github.com/damioGit/ror2-skillsplusplus) [![issues](https://img.shields.io/static/v1?label=bugs%20%26%20ideas&logo=github&message=issues&color=E05D44)](https://github.com/damioGit/ror2-skillsplusplus/issues)
+
 Spend skill points on your skills as you level up. Every survivor, every DLC, survivors from other mods, and multiplayer that actually syncs.
 
-Fork of [Skills++](https://thunderstore.io/package/CWMlolzlz/SkillsPlusPlus/) by CWMlolzlz, continued by Volvary and [icebro](https://thunderstore.io/package/icebro/SkillsPlusPlus/). Updated for **Risk of Rain 2 1.5.0**.
+This is a continuation of [Skills++](https://thunderstore.io/package/CWMlolzlz/SkillsPlusPlus/) by CWMlolzlz, kept alive over the years by Volvary and [icebro](https://thunderstore.io/c/riskofrain2/p/icebro/SkillsPlusPlus/). Updated for **Risk of Rain 2 1.5.0** (Alloyed Collective and the latest DLC). See [Credits](#credits): this mod exists because of them.
 
 **Everyone in the lobby needs this mod.** It replaces the older Skills++ packages (same plugin ID), so **uninstall other Skills++ versions** first.
 
@@ -11,20 +13,27 @@ Fork of [Skills++](https://thunderstore.io/package/CWMlolzlz/SkillsPlusPlus/) by
 - You get a skill point every 5 levels (configurable).
 - Hold the **Buy Skills** key (bind it in Controls) or the scoreboard key, then click a skill or press its key to spend a point.
 - Hover a skill to see what each level gives and your current level.
+- A skill can go up to **level 10** (configurable, 0 = no limit).
+- Forms share levels: when a skill is temporarily replaced (Void Fiend's corrupted mode, Heresy items, CHEF's boosted skills), the replacement uses the level of the skill you upgraded.
 - Upgrades last for the run.
 
 ## What's new in this fork
 
 - **Real multiplayer sync.** The host owns skill points and levels and sends them to everyone; clients ask the host to buy. Previous builds never ran the UNet weaver, so clients only got points at stage start and their purchases were local.
 - **Per-player upgrades.** Effects calculated on the host use the acting player's own level. Several used to apply only to player 1 (Captain's DIABLO and Railgunner's Supercharge/Cryocharge cooldowns, among others).
-- **Every skill can be upgraded.** All vanilla and DLC survivors have dedicated upgrades, including Seeker, False Son, Chef, Drifter, Operator, Acolyte and Enforcer. Survivors from other mods get dedicated upgrades where supported (Starstorm 2, Sandswept, Seamstress, EggsSkills' own integration) and generic upgrades otherwise.
+- **Every skill can be upgraded.** All vanilla and DLC survivors have dedicated upgrades, including Seeker, False Son, CHEF, Drifter, Operator, Acolyte and Enforcer. Survivors from other mods get dedicated upgrades where supported (Starstorm 2, Sandswept, Seamstress, Nemesis survivors, Executioner, Chirr, Ranger, VOL-T, plus EggsSkills' own integration) and generic upgrades otherwise.
+- **Balanced to the original tempo:** about +20% damage per point plus a mechanic for each skill.
 - **Respec.** Press F8 (configurable) or type `spp_respec` in the console. By default only in the Bazaar Between Time, for 1 lunar coin.
 - **Optional bonus points** for charged teleporters and every few stages.
-- **Calmer Director (optional, on by default).** Caps how many monsters are alive at once (25 instead of 40) and makes elites rarer, without changing gold or XP. Turn it off in the config.
+- **Calmer Director (optional, off by default).** Caps how many monsters are alive at once (25 instead of 40) and makes elites rarer, without changing gold or XP. Turn it on in the config if your runs get too crowded.
 
 ## Settings
 
-Everything is in the config file and in Risk of Options: levels per point, linear vs compounding scaling, generic upgrade values, respec rules, bonus points, Calmer Director. In multiplayer the host's settings are used.
+Everything is in the config file and in Risk of Options: levels per point, max level per skill, linear vs compounding scaling, generic upgrade values, respec rules, bonus points, Calmer Director. In multiplayer the host's settings are used.
+
+## Bugs and ideas
+
+Open an issue on [GitHub](https://github.com/damioGit/ror2-skillsplusplus/issues). Please include your mod list and `BepInEx/LogOutput.log`.
 
 ## For modders
 
@@ -35,13 +44,28 @@ The public API from the original mod still works (`SkillLevelModifier`, `SimpleS
 - `UseGenericCooldownAndStock`: also give your skill the generic cooldown and charge bonuses.
 - `SkillUpgrade.GetLevel(body, skillNames)`: a player's synced level, for host-side hooks.
 
-Skills are matched by SkillDef asset name (or `skillName` when the asset has no name), case-insensitively.
+Skills are matched by SkillDef asset name (or `skillName` when the asset has no name), case-insensitively. Levels are stored for the loadout skill; a temporary override with its own modifier shares that level.
+
+### Building from source
+
+The project builds against your local game and mod profile. Set `GameDir` and `ProfileDir` on the command line (`dotnet build -p:GameDir="..."`) or in a git-ignored `Skills.local.props` next to `Skills.csproj`.
 
 ## Credits
 
-- CWMlolzlz: original Skills++.
-- Volvary, icebro and contributors: earlier updates.
-- This fork was written with the help of an AI coding assistant (Claude).
+Skills++ has been passed from hand to hand for years. Huge thanks to everyone who carried it:
+
+- **[CWMlolzlz](https://thunderstore.io/package/CWMlolzlz/SkillsPlusPlus/)** (Connor Moody): created Skills++ and wrote the vast majority of it: the skill point system, the modifier API and most of the original upgrades. Everything here is built on that work.
+- **Volvary**: Bandit support and years of maintenance and updates.
+- **[icebro](https://thunderstore.io/c/riskofrain2/p/icebro/SkillsPlusPlus/)** ([gamrtiem](https://github.com/gamrtiem/ror2skillsplusplus)): brought the mod back for Seekers of the Storm and beyond, with CHEF, Seeker, False Son, Drifter and Operator support.
+- **goldenguy00**: hook cleanups and performance work.
+- **oorzkws**: crash fixes (FindOwningCharacterBody NRE, duplicate Void Fiend modifier).
+- **K'Not Devourer of Worlds, Maxi and TEA**: long-time testers and bug reporters credited by the earlier versions.
+- **[EggsSkills](https://thunderstore.io/c/riskofrain2/p/egpimp/EggsSkills/)** by egpimp: for integrating its skills with Skills++.
+- Everyone on the Risk of Rain 2 modding Discord who answered questions over the years.
+
+This fork is maintained by **damioGit** (MythMDS on Thunderstore). It was written with the help of an AI coding assistant (Claude by Anthropic).
+
+Licensed under MIT, like the original.
 
 ## Upgrades per level
 

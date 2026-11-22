@@ -50,8 +50,10 @@ namespace SkillsPlusPlus.UI
             if (description == null || !upgradeLabel) return;
 
             int level = provider.GetLevel();
+            int maxLevel = provider.GetMaxLevel();
+            string levelText = maxLevel > 0 ? $"{level}/{maxLevel}" : level.ToString();
             upgradeLabel.text = level > 0
-                ? Language.GetStringFormatted("TOOLTIP_UPGRADE_LEVEL_DESCRIPTION", description, level)
+                ? Language.GetStringFormatted("TOOLTIP_UPGRADE_LEVEL_DESCRIPTION", description, levelText)
                 : Language.GetStringFormatted("TOOLTIP_UPGRADE_DESCRIPTION", description);
         }
 
