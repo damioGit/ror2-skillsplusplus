@@ -27,7 +27,7 @@ namespace SkillsPlusPlus
     [BepInDependency(R2API.R2API.PluginGUID)]
     [BepInDependency(R2API.Networking.NetworkingAPI.PluginGUID)]
     [BepInDependency("com.KingEnderBrine.ExtendedLoadout", BepInDependency.DependencyFlags.SoftDependency)] //Soft-dependency to make Skills++ load after ExtendedLoadout
-    [BepInPlugin("com.cwmlolzlz.skills", "Skills", "0.9.1")]
+    [BepInPlugin("com.cwmlolzlz.skills", "Skills", "0.9.2")]
     [BepInDependency("pseudopulse.Rebindables")]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod)]
     public sealed class SkillsPlugin : BaseUnityPlugin

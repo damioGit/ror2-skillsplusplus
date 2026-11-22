@@ -1,5 +1,8 @@
 # Changelog
 
+## What's new in 0.9.2
+- README only: do whatever you want with the mod, just don't reupload it to Nexus Mods.
+
 ## What's new in 0.9.1
 
 **Oops:** I messed up the 0.9.0 release. It went out while the GitHub repo was still private, so there was no source link and nowhere to report bugs. The repo is public now: https://github.com/damioGit/ror2-skillsplusplus (issues welcome). The README also has a proper credits section for everyone who worked on Skills++ before.

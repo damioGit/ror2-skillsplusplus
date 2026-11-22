@@ -67,6 +67,12 @@ This fork is maintained by **damioGit** (MythMDS on Thunderstore). It was writte
 
 Licensed under MIT, like the original.
 
+## Reuploads
+
+Do whatever you want with this mod: fork it, patch it, borrow code, put it in your modpack. Just please **don't upload it to Nexus Mods**. Thunderstore is home.
+
+![no nexus](https://raw.githubusercontent.com/damioGit/ror2-skillsplusplus/main/Images/no-nexus.png)
+
 ## Upgrades per level
 
 Every skill can be upgraded. Skills marked *generic* get +15-20% damage (by slot). On top of that, any upgraded skill from another mod and every generic skill gets -6% cooldown if it has a cooldown, and +1 charge every 3 levels if it already has several charges.
